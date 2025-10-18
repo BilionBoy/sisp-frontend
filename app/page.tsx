@@ -1,23 +1,10 @@
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { StatCard } from "@/components/stat-card"
-import {
-  Building2,
-  Users2,
-  Target,
-  TrendingUp,
-  Shield,
-  Heart,
-  GraduationCap,
-  Hammer,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-} from "lucide-react"
+import { Shield, AlertTriangle, Users, Car, TrendingDown, MapPin, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 
 export default function DashboardPage() {
   return (
@@ -27,56 +14,55 @@ export default function DashboardPage() {
 
       <main className="ml-64 mt-20 p-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary text-balance">
-            Painel de Governança Municipal - Porto Velho Digital
-          </h1>
+          <h1 className="text-3xl font-bold text-primary text-balance">Painel de Comando Central - SISP Porto Velho</h1>
           <p className="text-muted-foreground mt-2 text-base">
-            Visão integrada da gestão municipal alinhada ao PAEDS 2030-2050
+            Visão geral das operações de segurança pública em tempo real
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <StatCard
-            title="Secretarias Ativas"
-            value="18"
-            change="100% operacionais"
+            title="Ocorrências Hoje"
+            value="47"
+            change="-12% vs ontem"
             changeType="positive"
-            icon={Building2}
+            icon={AlertTriangle}
             iconColor="text-primary"
           />
           <StatCard
-            title="Projetos em Andamento"
-            value="47"
-            change="+8 este mês"
+            title="Agentes em Patrulha"
+            value="156"
+            change="94% da força"
             changeType="positive"
-            icon={Target}
+            icon={Users}
             iconColor="text-secondary"
           />
           <StatCard
-            title="Distritos Atendidos"
-            value="9"
-            change="Cobertura total"
-            changeType="positive"
-            icon={Users2}
+            title="Viaturas Ativas"
+            value="38"
+            change="2 em manutenção"
+            changeType="neutral"
+            icon={Car}
             iconColor="text-chart-4"
           />
           <StatCard
-            title="Metas PAEDS 2030"
-            value="68%"
-            change="+5% este trimestre"
+            title="Tempo Resposta Médio"
+            value="8min"
+            change="-2min vs média"
             changeType="positive"
-            icon={TrendingUp}
+            icon={Clock}
             iconColor="text-chart-2"
           />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Ocorrências Recentes */}
           <Card className="lg:col-span-2 border-l-4 border-l-primary">
             <CardHeader className="bg-muted/30">
               <CardTitle className="flex items-center justify-between text-primary">
                 <span className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Visão Geral das Secretarias
+                  <AlertTriangle className="h-5 w-5" />
+                  Ocorrências Recentes
                 </span>
                 <Button
                   variant="outline"
@@ -91,75 +77,74 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {[
                   {
-                    name: "Segurança Pública",
-                    icon: Shield,
-                    projects: 12,
-                    budget: "R$ 8,5M",
-                    progress: 78,
-                    status: "Em dia",
-                    color: "text-primary",
+                    id: "OC-2847",
+                    type: "Furto",
+                    location: "Centro - Rua das Flores, 234",
+                    time: "há 5 minutos",
+                    status: "Em Atendimento",
+                    priority: "high",
                   },
                   {
-                    name: "Saúde",
-                    icon: Heart,
-                    projects: 18,
-                    budget: "R$ 15,2M",
-                    progress: 65,
-                    status: "Atenção",
-                    color: "text-destructive",
+                    id: "OC-2846",
+                    type: "Perturbação",
+                    location: "Bairro Alto - Av. Principal, 890",
+                    time: "há 12 minutos",
+                    status: "Despachado",
+                    priority: "medium",
                   },
                   {
-                    name: "Educação",
-                    icon: GraduationCap,
-                    projects: 24,
-                    budget: "R$ 22,8M",
-                    progress: 82,
-                    status: "Em dia",
-                    color: "text-secondary",
+                    id: "OC-2845",
+                    type: "Acidente",
+                    location: "Zona Sul - Rodovia BR-364, km 45",
+                    time: "há 18 minutos",
+                    status: "Resolvido",
+                    priority: "high",
                   },
                   {
-                    name: "Infraestrutura",
-                    icon: Hammer,
-                    projects: 15,
-                    budget: "R$ 18,4M",
-                    progress: 71,
-                    status: "Em dia",
-                    color: "text-chart-4",
+                    id: "OC-2844",
+                    type: "Suspeita",
+                    location: "Parque Industrial - Rua 7, 156",
+                    time: "há 25 minutos",
+                    status: "Em Análise",
+                    priority: "low",
                   },
-                ].map((secretaria) => (
+                ].map((occurrence) => (
                   <div
-                    key={secretaria.name}
-                    className="rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md hover:border-primary/50"
+                    key={occurrence.id}
+                    className="flex items-start gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md hover:border-primary/50"
                   >
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-muted p-2">
-                          <secretaria.icon className={`h-5 w-5 ${secretaria.color}`} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">{secretaria.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {secretaria.projects} projetos ativos • {secretaria.budget}
-                          </p>
-                        </div>
+                    <div
+                      className={cn(
+                        "mt-1 h-3 w-3 rounded-full shrink-0",
+                        occurrence.priority === "high" && "bg-destructive animate-pulse",
+                        occurrence.priority === "medium" && "bg-amber-500",
+                        occurrence.priority === "low" && "bg-secondary",
+                      )}
+                    />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-foreground">
+                          {occurrence.id} - {occurrence.type}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs font-medium",
+                            occurrence.status === "Em Atendimento" && "border-primary text-primary",
+                            occurrence.status === "Resolvido" && "border-secondary text-secondary",
+                          )}
+                        >
+                          {occurrence.status}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-xs font-medium",
-                          secretaria.status === "Em dia" && "border-secondary text-secondary",
-                          secretaria.status === "Atenção" && "border-amber-500 text-amber-600",
-                        )}
-                      >
-                        {secretaria.status}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Execução orçamentária</span>
-                        <span className="font-semibold text-foreground">{secretaria.progress}%</span>
-                      </div>
-                      <Progress value={secretaria.progress} className="h-2" />
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {occurrence.location}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {occurrence.time}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -167,119 +152,67 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Alertas e Notificações */}
           <Card className="border-l-4 border-l-secondary">
             <CardHeader className="bg-muted/30">
               <CardTitle className="flex items-center gap-2 text-primary">
-                <AlertCircle className="h-5 w-5" />
-                Prioridades e Alertas
+                <Shield className="h-5 w-5" />
+                Alertas do Sistema
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div className="flex gap-3 rounded-lg border-2 border-destructive/50 bg-destructive/10 p-4 shadow-sm">
-                  <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">Atenção Urgente</p>
+                    <p className="text-sm font-semibold text-foreground">Área de Alto Risco</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Saúde: 3 UBS com déficit de profissionais
+                      Centro - 3 ocorrências nas últimas 2h
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3 rounded-lg border-2 border-amber-500/50 bg-amber-500/10 p-4 shadow-sm">
-                  <Clock className="h-5 w-5 shrink-0 text-amber-600" />
+                  <Shield className="h-5 w-5 shrink-0 text-amber-600" />
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">Prazo Próximo</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">Relatório PAEDS vence em 15 dias</p>
+                    <p className="text-sm font-semibold text-foreground">Evento Programado</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Show no estádio - Reforço sugerido</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3 rounded-lg border-2 border-secondary/50 bg-secondary/10 p-4 shadow-sm">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-secondary" />
+                  <TrendingDown className="h-5 w-5 shrink-0 text-secondary" />
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">Meta Alcançada</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Educação: 95% de matrículas realizadas
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 rounded-lg border-2 border-primary/50 bg-primary/10 p-4 shadow-sm">
-                  <Target className="h-5 w-5 shrink-0 text-primary" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">PAEDS 2030-2050</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      68% das metas estratégicas em andamento
-                    </p>
+                    <p className="text-sm font-semibold text-foreground">Melhoria Detectada</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Zona Norte - 40% menos ocorrências</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Mapa Placeholder */}
           <Card className="lg:col-span-3 border-l-4 border-l-accent">
             <CardHeader className="bg-muted/30">
               <CardTitle className="flex items-center gap-2 text-primary">
-                <Target className="h-5 w-5" />
-                Projetos Intersetoriais em Destaque
+                <MapPin className="h-5 w-5" />
+                Mapa de Calor - Ocorrências em Tempo Real
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="grid gap-4 md:grid-cols-3">
-                {[
-                  {
-                    name: "Porto Velho Sustentável",
-                    secretarias: ["Meio Ambiente", "Infraestrutura", "Educação"],
-                    progress: 72,
-                    deadline: "Dez/2025",
-                    status: "Em andamento",
-                  },
-                  {
-                    name: "Cidade Inteligente",
-                    secretarias: ["Tecnologia", "Segurança", "Mobilidade"],
-                    progress: 58,
-                    deadline: "Jun/2026",
-                    status: "Em andamento",
-                  },
-                  {
-                    name: "Saúde nas Escolas",
-                    secretarias: ["Saúde", "Educação", "Assistência Social"],
-                    progress: 85,
-                    deadline: "Mar/2025",
-                    status: "Avançado",
-                  },
-                ].map((projeto) => (
-                  <div
-                    key={projeto.name}
-                    className="rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md hover:border-primary/50"
-                  >
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">{projeto.name}</h3>
-                        <div className="flex flex-wrap gap-1">
-                          {projeto.secretarias.map((sec) => (
-                            <Badge key={sec} variant="secondary" className="text-xs">
-                              {sec}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Progresso</span>
-                          <span className="font-semibold text-foreground">{projeto.progress}%</span>
-                        </div>
-                        <Progress value={projeto.progress} className="h-2" />
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Prazo: {projeto.deadline}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {projeto.status}
-                        </Badge>
-                      </div>
-                    </div>
+              <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
+                <div className="text-center space-y-3">
+                  <MapPin className="mx-auto h-16 w-16 text-primary" />
+                  <div>
+                    <p className="text-base font-medium text-foreground">Mapa interativo será carregado aqui</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Integração com dados da Polícia Civil e georreferenciamento
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Heatmap com raio de 3km em torno dos bens públicos
+                    </p>
                   </div>
-                ))}
+                </div>
               </div>
             </CardContent>
           </Card>

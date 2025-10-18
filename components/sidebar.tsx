@@ -5,81 +5,71 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  Building2,
-  MapPinned,
-  Users2,
-  Target,
-  FolderKanban,
-  Shield,
-  Heart,
-  GraduationCap,
-  Hammer,
-  Leaf,
-  ChevronLeft,
+  MapPin,
+  Users,
+  Car,
+  Route,
+  BarChart3,
+  Globe,
   Settings,
+  ChevronLeft,
+  Camera,
+  FileText,
+  Shield,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 
 const navigation = [
   {
-    name: "Dashboard Geral",
+    name: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
   },
   {
-    name: "Secretarias",
-    href: "/secretarias",
-    icon: Building2,
+    name: "Mapa de Ocorrências",
+    href: "/ocorrencias",
+    icon: MapPin,
   },
   {
-    name: "Administrações Regionais",
-    href: "/distritos",
-    icon: MapPinned,
+    name: "Gestão de Agentes",
+    href: "/agentes",
+    icon: Users,
   },
   {
-    name: "Participação Social",
-    href: "/participacao",
-    icon: Users2,
+    name: "Viaturas",
+    href: "/viaturas",
+    icon: Car,
   },
   {
-    name: "PAEDS 2030-2050",
-    href: "/paeds",
-    icon: Target,
+    name: "Monitoramento",
+    href: "/monitoramento",
+    icon: Camera,
   },
   {
-    name: "Projetos Intersetoriais",
-    href: "/projetos",
-    icon: FolderKanban,
-  },
-]
-
-const secretariasMenu = [
-  {
-    name: "Segurança Pública",
-    href: "/seguranca",
-    icon: Shield,
+    name: "Roteamento IA",
+    href: "/roteamento",
+    icon: Route,
   },
   {
-    name: "Saúde",
-    href: "/saude",
-    icon: Heart,
+    name: "Análises",
+    href: "/analises",
+    icon: BarChart3,
   },
   {
-    name: "Educação",
-    href: "/educacao",
-    icon: GraduationCap,
+    name: "Portal Transparência",
+    href: "/transparencia",
+    icon: Globe,
   },
   {
-    name: "Infraestrutura",
-    href: "/infraestrutura",
-    icon: Hammer,
+    name: "Relatórios",
+    href: "/relatorios",
+    icon: FileText,
   },
   {
-    name: "Meio Ambiente",
-    href: "/meio-ambiente",
-    icon: Leaf,
+    name: "Configurações",
+    href: "/configuracoes",
+    icon: Settings,
   },
 ]
 
@@ -98,10 +88,10 @@ export function Sidebar() {
         {!collapsed && (
           <div className="border-b border-sidebar-border bg-sidebar-accent px-4 py-4">
             <div className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-sidebar-foreground" />
+              <Shield className="h-6 w-6 text-sidebar-foreground" />
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-sidebar-foreground">Porto Velho Digital</span>
-                <span className="text-xs text-sidebar-foreground/80">Governança Integrada</span>
+                <span className="text-sm font-bold text-sidebar-foreground">SISP</span>
+                <span className="text-xs text-sidebar-foreground/80">Segurança Inteligente</span>
               </div>
             </div>
           </div>
@@ -128,51 +118,6 @@ export function Sidebar() {
                 </Link>
               )
             })}
-
-            {!collapsed && (
-              <>
-                <Separator className="my-3 bg-sidebar-border" />
-                <div className="px-3 py-2">
-                  <p className="text-xs font-semibold text-sidebar-foreground/70">SECRETARIAS</p>
-                </div>
-              </>
-            )}
-
-            {secretariasMenu.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-foreground shadow-sm"
-                      : "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
-                  )}
-                  title={collapsed ? item.name : undefined}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="text-xs">{item.name}</span>}
-                </Link>
-              )
-            })}
-
-            {!collapsed && <Separator className="my-3 bg-sidebar-border" />}
-
-            <Link
-              href="/configuracoes"
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
-                pathname === "/configuracoes"
-                  ? "bg-sidebar-accent text-sidebar-foreground shadow-sm"
-                  : "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
-              )}
-              title={collapsed ? "Configurações" : undefined}
-            >
-              <Settings className="h-5 w-5 shrink-0" />
-              {!collapsed && <span>Configurações</span>}
-            </Link>
           </nav>
         </div>
 

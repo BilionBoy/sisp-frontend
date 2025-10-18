@@ -32,7 +32,7 @@ export function Header() {
               <span className="text-base font-bold leading-tight text-primary">CIDADE DE</span>
               <span className="text-xl font-black leading-tight text-primary">PORTO VELHO</span>
               <span className="text-xs font-semibold leading-tight text-muted-foreground">
-                Porto Velho Digital - Governança Integrada
+                SISP - Sistema Integrado de Segurança Pública
               </span>
             </div>
           </div>
@@ -54,7 +54,7 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Secretário Municipal</DropdownMenuLabel>
+              <DropdownMenuLabel>Comandante Silva</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Perfil</DropdownMenuItem>
               <DropdownMenuItem>Configurações</DropdownMenuItem>

@@ -16,8 +16,8 @@ const robotoMono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Porto Velho Digital - Plataforma de Governança Integrada",
-  description: "Sistema integrado de gestão municipal alinhado ao PAEDS Porto Velho 2030-2050",
+  title: "SISP Porto Velho - Sistema Integrado de Segurança Pública",
+  description: "Plataforma inteligente de gestão e monitoramento da segurança pública municipal",
     generator: 'v0.app'
 }
 
