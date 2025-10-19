@@ -88,6 +88,34 @@ function parseCoordinate(coord: string | number): number {
 }
 
 /**
+ * Converte data e hora da ocorrência para timestamp ISO 8601
+ * Combina data_ocorrencia (YYYY-MM-DD) com hora_ocorrencia (HH:MM ou ISO datetime)
+ */
+function buildOcorrenciaTimestamp(data_ocorrencia: string, hora_ocorrencia: string): string {
+  try {
+    // Se hora_ocorrencia é ISO datetime completo, usar diretamente
+    if (hora_ocorrencia.includes('T') || hora_ocorrencia.includes('Z')) {
+      return hora_ocorrencia
+    }
+
+    // Se é apenas hora (HH:MM ou HH:MM:SS), combinar com data_ocorrencia
+    if (hora_ocorrencia.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+      // Se já tem segundos, usar direto; senão adicionar :00
+      const horaCompleta = hora_ocorrencia.match(/^\d{2}:\d{2}:\d{2}$/)
+        ? hora_ocorrencia
+        : `${hora_ocorrencia}:00`
+      return `${data_ocorrencia}T${horaCompleta}.000Z`
+    }
+
+    // Fallback: usar apenas a data
+    return `${data_ocorrencia}T00:00:00.000Z`
+  } catch (error) {
+    console.warn('Erro ao construir timestamp:', error)
+    return new Date().toISOString()
+  }
+}
+
+/**
  * Converte OcorrenciaAPI para Incident (formato do frontend)
  * NOTA: Agora é assíncrona pois busca gravidade do tipo de crime da API
  */
@@ -115,6 +143,9 @@ export async function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Promis
   // Buscar prioridade baseada na gravidade do tipo de crime
   const priority = await mapPriority(ocorrencia)
 
+  // Construir timestamp da ocorrência (quando aconteceu, não quando foi registrado)
+  const timestamp = buildOcorrenciaTimestamp(ocorrencia.data_ocorrencia, ocorrencia.hora_ocorrencia)
+
   return {
     id: generateIncidentId(ocorrencia.id_ocorrencia, ocorrencia.numero_bo),
     type: tipo,
@@ -123,7 +154,7 @@ export async function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Promis
     lat,
     lng,
     coordinates: [lat, lng],
-    timestamp: ocorrencia.data_registro,
+    timestamp, // Agora usa data_ocorrencia + hora_ocorrencia
     status: mapStatus(ocorrencia.status_ocorrencia),
     priority,
     bairro,
