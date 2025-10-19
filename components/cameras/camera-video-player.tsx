@@ -56,13 +56,14 @@ export function CameraVideoPlayer({ videoUrl, cameraNome }: CameraVideoPlayerPro
 
       {/* YouTube Iframe */}
       <iframe
-        src={`${videoUrl}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0`}
+        src={`${videoUrl}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0`}
         title={`Câmera de segurança - ${cameraNome}`}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full border-0"
         onLoad={handleLoad}
         onError={handleError}
+        frameBorder="0"
       />
     </div>
   )
