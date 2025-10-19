@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
 import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
 import { OcorrenciasListCompact } from "@/components/ocorrencias-list-compact"
 import { PriorityWidget } from "@/components/priority-widget"
 import { IncidentDetails } from "@/components/incident-details"
@@ -15,10 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useInfiniteOcorrencias } from "@/lib/hooks/use-infinite-ocorrencias"
 import { useDebounce } from "@/lib/hooks/use-debounce"
-import { useSidebar } from "@/lib/contexts/sidebar-context"
 import { useCameras } from "@/lib/hooks/use-cameras"
 import { cn } from "@/lib/utils"
-import { Toaster } from "sonner"
 import type { Incident } from "@/lib/types/map"
 import type { Camera } from "@/lib/types/camera"
 
@@ -65,8 +62,7 @@ export default function OcorrenciasPage() {
     }
   }, [isListCollapsed, hasMounted])
 
-  const { isCollapsed } = useSidebar()
-
+  // Desktop: Paginação automática em background (50 em 50)
   const {
     incidents: allIncidents,
     isLoading,
@@ -79,6 +75,20 @@ export default function OcorrenciasPage() {
     updateOcorrencia
   } = useInfiniteOcorrencias()
 
+  // Auto-load em background: carregar próximas páginas automaticamente
+  useEffect(() => {
+    if (!isLoading && hasMore && !isFetchingMore) {
+      // Delay mínimo de 100ms entre cada página para evitar sobrecarga
+      const timer = setTimeout(() => {
+        console.log(`[AUTO-LOAD] Iniciando próxima página... (${allIncidents.length} carregados, hasMore: ${hasMore})`)
+        loadMore()
+      }, 100)
+      return () => clearTimeout(timer)
+    } else {
+      console.log(`[AUTO-LOAD] Status: isLoading=${isLoading}, hasMore=${hasMore}, isFetchingMore=${isFetchingMore}, total=${allIncidents.length}`)
+    }
+  }, [allIncidents.length, hasMore, isFetchingMore, isLoading, loadMore])
+
   // Hook de câmeras
   const {
     onlineCameras,
@@ -90,10 +100,26 @@ export default function OcorrenciasPage() {
 
   const debouncedPriorityFilter = useDebounce(priorityFilter, 300)
 
+  // MAPA: Renderizar TODOS os pins (filtrados por prioridade se houver filtro)
   const filteredIncidents = useMemo(() => {
-    if (debouncedPriorityFilter === "all") return allIncidents
-    return allIncidents.filter(inc => inc.priority === debouncedPriorityFilter)
+    const result = debouncedPriorityFilter === "all"
+      ? allIncidents
+      : allIncidents.filter(inc => inc.priority === debouncedPriorityFilter)
+
+    console.log(`[DISPLAY] allIncidents: ${allIncidents.length}, filteredIncidents: ${result.length}, filter: ${debouncedPriorityFilter}`)
+    return result
   }, [allIncidents, debouncedPriorityFilter])
+
+  // LISTA LATERAL: Apenas 50 mais recentes (ordenados por data)
+  const recentIncidents = useMemo(() => {
+    const sorted = [...filteredIncidents].sort((a, b) => {
+      // Ordenar por data de criação (mais recentes primeiro)
+      const dateA = a._apiData?.data_ocorrencia ? new Date(a._apiData.data_ocorrencia).getTime() : 0
+      const dateB = b._apiData?.data_ocorrencia ? new Date(b._apiData.data_ocorrencia).getTime() : 0
+      return dateB - dateA
+    })
+    return sorted.slice(0, 50)
+  }, [filteredIncidents])
 
   // Handler para clique em incidente (do mapa ou da lista)
   const handleIncidentClick = (id: string) => {
@@ -144,14 +170,8 @@ export default function OcorrenciasPage() {
       <MobileRedirect mobileRoute="/ocorrencias-mobile" desktopRoutes={["/ocorrencias"]} />
 
       <Header />
-      <Sidebar />
-      <Toaster position="top-right" richColors />
 
-      <main className={cn(
-        "transition-all duration-300",
-        // Ajusta margem baseado no estado da sidebar (apenas desktop)
-        isCollapsed ? "md:ml-16" : "md:ml-64"
-      )}>
+      <main>
         {/* Container do mapa em tela cheia */}
         <div className="relative h-screen">
           {/* Mapa principal */}
@@ -162,9 +182,18 @@ export default function OcorrenciasPage() {
                 <p className="text-muted-foreground">Carregando ocorrências...</p>
               </div>
             ) : error ? (
-              <div className="w-full h-full bg-muted rounded-lg flex flex-col items-center justify-center gap-4">
-                <p className="text-destructive font-semibold">Erro ao carregar ocorrências</p>
-                <p className="text-sm text-muted-foreground">{error.message}</p>
+              <div className="w-full h-full bg-muted rounded-lg flex flex-col items-center justify-center gap-4 px-4">
+                <p className="text-destructive font-semibold">Sem conexão com servidor</p>
+                <p className="text-sm text-muted-foreground max-w-md text-center">
+                  {error.message?.includes('timeout')
+                    ? 'O servidor não respondeu a tempo. Verifique sua conexão.'
+                    : error.message?.includes('fetch')
+                    ? 'Não foi possível conectar ao servidor.'
+                    : error.message || "Não foi possível carregar as ocorrências"}
+                </p>
+                <p className="text-xs text-muted-foreground max-w-md text-center">
+                  Certifique-se de que o servidor está rodando e acessível na rede.
+                </p>
                 <Button onClick={refresh} variant="outline">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Tentar Novamente
@@ -184,8 +213,8 @@ export default function OcorrenciasPage() {
                 showLegend={false}
                 showCameras={true}
                 height="100%"
-                useViewportRendering={true}
-                useCanvasRendering={false}
+                useViewportRendering={false}
+                useCanvasRendering={true}
               />
             )}
           </div>
@@ -215,7 +244,7 @@ export default function OcorrenciasPage() {
                     <span>Ocorrências Recentes</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-normal text-muted-foreground">
-                        {filteredIncidents.length} {filteredIncidents.length === 1 ? "ocorrência" : "ocorrências"}
+                        {recentIncidents.length} de {filteredIncidents.length}
                       </span>
                       <Button
                         variant="ghost"
@@ -250,13 +279,10 @@ export default function OcorrenciasPage() {
                       </div>
                     ) : (
                       <OcorrenciasListCompact
-                        incidents={filteredIncidents}
+                        incidents={recentIncidents}
                         selectedId={selectedIncident}
                         onSelect={handleIncidentClick}
                         priorityFilter={priorityFilter}
-                        hasMore={hasMore}
-                        isFetchingMore={isFetchingMore}
-                        onLoadMore={loadMore}
                       />
                     )}
                   </CardContent>

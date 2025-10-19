@@ -22,16 +22,22 @@ async function fetchAPI<T>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
+  const controller = new AbortController()
+  // Timeout de 30s para permitir conexões mobile mais lentas
+  const timeoutId = setTimeout(() => controller.abort(), 30000)
 
   try {
     const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...options?.headers,
       },
-      ...options,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -44,6 +50,10 @@ async function fetchAPI<T>(
 
     return response.json()
   } catch (error) {
+    clearTimeout(timeoutId)
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout after 30 seconds')
+    }
     console.error(`API Error [${endpoint}]:`, error)
     throw error
   }
@@ -77,15 +87,18 @@ export const ocorrenciasAPI = {
       })
     }
 
-    // Por padrão, buscar muitas ocorrências de uma vez
-    if (!filters?.per_page) {
-      params.append('per_page', '1000')
-    }
+    // Se não especificado per_page, o backend usará seu default
+    // Não forçamos um valor aqui para permitir que o hook controle
 
     const queryString = params.toString()
     const endpoint = `/ocorrencias${queryString ? `?${queryString}` : ""}`
 
+    console.log(`[ocorrencias-api] Request: GET ${endpoint}`)
+    console.log(`[ocorrencias-api] Filters:`, filters)
+
     const response = await fetchAPI<ListOcorrenciasResponse>(endpoint)
+
+    console.log(`[ocorrencias-api] Response: ${response.ocorrencias?.length || 0} ocorrências, total_count: ${response.total_count}, total_pages: ${response.total_pages}`)
 
     // API retorna { ocorrencias: [...], ... }
     return response.ocorrencias || []
