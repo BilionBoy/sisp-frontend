@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, AlertCircle, Check, Camera as CameraIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -51,10 +51,10 @@ export function CreateOcorrenciaModal({
   const [descricao, setDescricao] = useState("")
 
   // Campos preenchidos automaticamente
-  const [numeroBO] = useState(generateNumeroBO())
+  const [numeroBO, setNumeroBO] = useState(generateNumeroBO())
   const [idBairro] = useState<number>(1)
-  const [dataOcorrencia] = useState(new Date().toISOString().split('T')[0])
-  const [horaOcorrencia] = useState(new Date().toTimeString().slice(0, 5))
+  const [dataOcorrencia, setDataOcorrencia] = useState(new Date().toISOString().split('T')[0])
+  const [horaOcorrencia, setHoraOcorrencia] = useState(new Date().toTimeString().slice(0, 5))
 
   // Coordenadas: usar diretamente de initialCoordinates (não useState)
   // para garantir que sempre usamos as coordenadas mais recentes do clique
@@ -132,6 +132,16 @@ export function CreateOcorrenciaModal({
       setIsSubmitting(false)
     }
   }
+
+  // Gerar novo número de BO quando o modal abrir
+  useEffect(() => {
+    if (open) {
+      const now = new Date()
+      setNumeroBO(generateNumeroBO())
+      setDataOcorrencia(now.toISOString().split('T')[0])
+      setHoraOcorrencia(now.toTimeString().slice(0, 5))
+    }
+  }, [open])
 
   const resetForm = () => {
     setIdTipoCrime(23)

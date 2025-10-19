@@ -20,7 +20,7 @@ export default function OcorrenciaDetailPage() {
 
   // Handler para voltar
   const handleBack = () => {
-    router.push("/ocorrencias-mobile")
+    router.back()
   }
 
   // Handler para encerrar ocorrência
@@ -40,7 +40,7 @@ export default function OcorrenciaDetailPage() {
 
       // Aguardar um pouco para o usuário ver a mensagem
       setTimeout(() => {
-        router.push("/ocorrencias-mobile")
+        router.back()
       }, 1500)
     } catch (error) {
       console.error("Erro ao encerrar ocorrência:", error)
