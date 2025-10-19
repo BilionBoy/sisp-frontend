@@ -304,6 +304,7 @@ export default function OcorrenciasPage() {
 
         {/* Modal de Criar Nova Ocorrência */}
         <CreateOcorrenciaModal
+          key={showCreateModal ? Date.now() : 'closed'}
           open={showCreateModal}
           onClose={() => {
             setShowCreateModal(false)
