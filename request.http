@@ -1,0 +1,57 @@
+### Listar ocorrencias (GET)
+GET http://10.0.1.66:3000/api/v1/ocorrencias
+Accept: application/json
+
+### Filtrar ocorrencias por BO (GET)
+GET http://10.0.1.66:3000/api/v1/ocorrencias?numero_bo=BO2015345110
+Accept: application/json
+
+### Criar nova ocorrencia (POST)
+POST http://10.0.1.66:3000/api/v1/ocorrencias/new
+Content-Type: application/json
+Accept: application/json
+
+{
+  "ocorrencia": {
+    "numero_bo": "BO2025101810",
+    "id_tipo_crime": 23,
+    "id_bairro": 1,
+    "data_ocorrencia": "2025-10-18",
+    "hora_ocorrencia": "21:00",
+    "dia_semana": "Sábado",
+    "periodo_dia": "Noite",
+    "latitude_ocorrencia": -8.7496,
+    "longitude_ocorrencia": -63.89237,
+    "logradouro": "Rua Teste",
+    "numero_endereco": "123",
+    "ponto_referencia": "Próximo ao mercado",
+    "descricao_ocorrencia": "Teste de criação",
+    "vitimas": 1,
+    "valor_prejuizo": 1000.0,
+    "recuperado": false,
+    "status_ocorrencia": "Registrada",
+    "origem_registro": "Sistema Integrado",
+    "data_registro": "2025-10-18T19:00:00Z",
+    "usuario_registro": 1
+  }
+}
+
+### Mostrar ocorrencia pelo ID (GET)
+GET http://10.0.1.66:3000/api/v1/ocorrencias/1
+Accept: application/json
+
+### Atualizar ocorrencia pelo ID (PUT)
+PUT http://10.0.1.66:3000/api/v1/ocorrencias/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "ocorrencia": {
+    "status_ocorrencia": "Concluída",
+    "descricao_ocorrencia": "Atualização de teste"
+  }
+}
+
+### Deletar ocorrencia pelo ID (DELETE)
+DELETE http://10.0.1.66:3000/api/v1/ocorrencias/1
+Accept: application/json

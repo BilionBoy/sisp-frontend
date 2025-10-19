@@ -55,7 +55,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           {/* Ocorrências Recentes */}
           <Card className="lg:col-span-2 border-l-4 border-l-primary">
             <CardHeader className="bg-muted/30">

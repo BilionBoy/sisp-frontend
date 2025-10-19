@@ -1,0 +1,437 @@
+"use client"
+
+import { useState } from "react"
+import { X, MapPin, Calendar, Clock, AlertCircle, DollarSign, Users } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { toast } from "sonner"
+import { buildCreatePayload } from "@/lib/services/ocorrencias-api"
+import type { CreateOcorrenciaPayload } from "@/lib/types/ocorrencia-api"
+import type { Incident } from "@/lib/types/map"
+
+interface CreateOcorrenciaModalProps {
+  open: boolean
+  onClose: () => void
+  onSuccess: (incident: Incident) => void
+  onSubmit: (payload: CreateOcorrenciaPayload) => Promise<Incident>
+  initialCoordinates?: [number, number] // [lat, lng]
+}
+
+/**
+ * Modal para criar nova ocorrência
+ */
+export function CreateOcorrenciaModal({
+  open,
+  onClose,
+  onSuccess,
+  onSubmit,
+  initialCoordinates,
+}: CreateOcorrenciaModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Dados do formulário
+  const [numeroBO, setNumeroBO] = useState("")
+  const [idTipoCrime, setIdTipoCrime] = useState<number>(23) // Default: Furto
+  const [idBairro, setIdBairro] = useState<number>(1)
+  const [dataOcorrencia, setDataOcorrencia] = useState(
+    new Date().toISOString().split('T')[0]
+  )
+  const [horaOcorrencia, setHoraOcorrencia] = useState(
+    new Date().toTimeString().slice(0, 5)
+  )
+  const [latitude, setLatitude] = useState(
+    initialCoordinates?.[0] || -8.76077
+  )
+  const [longitude, setLongitude] = useState(
+    initialCoordinates?.[1] || -63.8999
+  )
+  const [logradouro, setLogradouro] = useState("")
+  const [numeroEndereco, setNumeroEndereco] = useState("")
+  const [pontoReferencia, setPontoReferencia] = useState("")
+  const [descricao, setDescricao] = useState("")
+  const [vitimas, setVitimas] = useState(0)
+  const [valorPrejuizo, setValorPrejuizo] = useState(0)
+  const [recuperado, setRecuperado] = useState(false)
+
+  /**
+   * Calcula dia da semana e período do dia automaticamente
+   */
+  const calcularDiaSemanaEPeriodo = () => {
+    const data = new Date(`${dataOcorrencia}T${horaOcorrencia}`)
+
+    const diaSemana = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' })
+      .format(data)
+      .replace(/^\w/, c => c.toUpperCase())
+
+    const hora = parseInt(horaOcorrencia.split(':')[0])
+    let periodoDia = "Manhã"
+    if (hora >= 0 && hora < 6) periodoDia = "Madrugada"
+    else if (hora >= 6 && hora < 12) periodoDia = "Manhã"
+    else if (hora >= 12 && hora < 18) periodoDia = "Tarde"
+    else periodoDia = "Noite"
+
+    return { diaSemana, periodoDia }
+  }
+
+  /**
+   * Validação básica
+   */
+  const validarFormulario = (): boolean => {
+    if (!numeroBO.trim()) {
+      toast.error("Número do BO é obrigatório")
+      return false
+    }
+
+    if (!logradouro.trim()) {
+      toast.error("Logradouro é obrigatório")
+      return false
+    }
+
+    if (!descricao.trim()) {
+      toast.error("Descrição da ocorrência é obrigatória")
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * Submete o formulário
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validarFormulario()) return
+
+    try {
+      setIsSubmitting(true)
+
+      const { diaSemana, periodoDia } = calcularDiaSemanaEPeriodo()
+
+      const payload = buildCreatePayload({
+        numero_bo: numeroBO,
+        id_tipo_crime: idTipoCrime,
+        id_bairro: idBairro,
+        data_ocorrencia: dataOcorrencia,
+        hora_ocorrencia: horaOcorrencia,
+        dia_semana: diaSemana,
+        periodo_dia: periodoDia,
+        latitude_ocorrencia: latitude,
+        longitude_ocorrencia: longitude,
+        logradouro,
+        numero_endereco: numeroEndereco,
+        ponto_referencia: pontoReferencia,
+        descricao_ocorrencia: descricao,
+        vitimas,
+        valor_prejuizo: valorPrejuizo,
+        recuperado,
+        status_ocorrencia: "Registrada",
+        origem_registro: "Sistema Integrado",
+        data_registro: new Date().toISOString(),
+        usuario_registro: 1, // TODO: pegar do usuário logado
+      })
+
+      const incident = await onSubmit(payload)
+
+      toast.success("Ocorrência criada com sucesso!")
+      onSuccess(incident)
+      onClose()
+      resetForm()
+    } catch (error) {
+      console.error("Erro ao criar ocorrência:", error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erro ao criar ocorrência. Tente novamente."
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  /**
+   * Reseta o formulário
+   */
+  const resetForm = () => {
+    setNumeroBO("")
+    setIdTipoCrime(23)
+    setIdBairro(1)
+    setDataOcorrencia(new Date().toISOString().split('T')[0])
+    setHoraOcorrencia(new Date().toTimeString().slice(0, 5))
+    setLatitude(initialCoordinates?.[0] || -8.76077)
+    setLongitude(initialCoordinates?.[1] || -63.8999)
+    setLogradouro("")
+    setNumeroEndereco("")
+    setPontoReferencia("")
+    setDescricao("")
+    setVitimas(0)
+    setValorPrejuizo(0)
+    setRecuperado(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Nova Ocorrência
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Informações Básicas */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Informações Básicas
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="numeroBO">
+                  Número do BO <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="numeroBO"
+                  placeholder="BO2025101810"
+                  value={numeroBO}
+                  onChange={(e) => setNumeroBO(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipoCrime">
+                  Tipo de Crime <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={String(idTipoCrime)}
+                  onValueChange={(v) => setIdTipoCrime(parseInt(v))}
+                >
+                  <SelectTrigger id="tipoCrime">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="23">Furto</SelectItem>
+                    <SelectItem value="24">Roubo</SelectItem>
+                    <SelectItem value="25">Homicídio</SelectItem>
+                    <SelectItem value="26">Lesão Corporal</SelectItem>
+                    <SelectItem value="27">Tráfico de Drogas</SelectItem>
+                    <SelectItem value="28">Acidente de Trânsito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao">
+                Descrição da Ocorrência <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="descricao"
+                placeholder="Descreva detalhadamente a ocorrência..."
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Data e Hora */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Data e Hora
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dataOcorrencia">Data da Ocorrência</Label>
+                <Input
+                  id="dataOcorrencia"
+                  type="date"
+                  value={dataOcorrencia}
+                  onChange={(e) => setDataOcorrencia(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="horaOcorrencia">Hora da Ocorrência</Label>
+                <Input
+                  id="horaOcorrencia"
+                  type="time"
+                  value={horaOcorrencia}
+                  onChange={(e) => setHoraOcorrencia(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Localização */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Localização
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="logradouro">
+                  Logradouro <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="logradouro"
+                  placeholder="Av. Presidente Dutra"
+                  value={logradouro}
+                  onChange={(e) => setLogradouro(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numeroEndereco">Número</Label>
+                <Input
+                  id="numeroEndereco"
+                  placeholder="123"
+                  value={numeroEndereco}
+                  onChange={(e) => setNumeroEndereco(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
+              <Input
+                id="pontoReferencia"
+                placeholder="Próximo ao mercado"
+                value={pontoReferencia}
+                onChange={(e) => setPontoReferencia(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bairro">Bairro</Label>
+                <Select
+                  value={String(idBairro)}
+                  onValueChange={(v) => setIdBairro(parseInt(v))}
+                >
+                  <SelectTrigger id="bairro">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Centro</SelectItem>
+                    <SelectItem value="2">Zona Leste</SelectItem>
+                    <SelectItem value="3">Zona Sul</SelectItem>
+                    <SelectItem value="4">Zona Norte</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="0.000001"
+                  value={latitude}
+                  onChange={(e) => setLatitude(parseFloat(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="0.000001"
+                  value={longitude}
+                  onChange={(e) => setLongitude(parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Detalhes Adicionais */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Detalhes Adicionais
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="vitimas" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Vítimas
+                </Label>
+                <Input
+                  id="vitimas"
+                  type="number"
+                  min="0"
+                  value={vitimas}
+                  onChange={(e) => setVitimas(parseInt(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="valorPrejuizo" className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Valor do Prejuízo (R$)
+                </Label>
+                <Input
+                  id="valorPrejuizo"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={valorPrejuizo}
+                  onChange={(e) => setValorPrejuizo(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="flex items-end space-y-2 pb-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="recuperado"
+                    checked={recuperado}
+                    onCheckedChange={(checked) => setRecuperado(checked as boolean)}
+                  />
+                  <Label
+                    htmlFor="recuperado"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Bem recuperado
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm()
+                onClose()
+              }}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Criando..." : "Criar Ocorrência"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

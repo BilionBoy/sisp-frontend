@@ -19,16 +19,7 @@ interface IncidentFiltersProps {
 export function IncidentFilters({ filters, onFiltersChange }: IncidentFiltersProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por ID, tipo ou localização..." className="pl-9" />
-        </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
-      </div>
-
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
