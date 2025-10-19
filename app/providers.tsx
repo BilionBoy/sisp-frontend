@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Toaster } from 'sonner'
 import { NotificationsProvider } from '@/components/notifications-provider'
+import { PWAInstallBanner } from '@/components/pwa/pwa-install-banner'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -20,7 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <NotificationsProvider>
+        {/* Banner de instalação PWA (aparece apenas se NÃO estiver instalado) */}
+        <PWAInstallBanner />
+
         {children}
+
         <Toaster
           position="top-center"
           richColors

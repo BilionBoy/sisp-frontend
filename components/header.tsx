@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ConnectionIndicator } from "@/components/connection-indicator"
+import { PWABadge } from "@/components/pwa/pwa-install-banner"
 import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
 export function Header() {
@@ -44,6 +45,9 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Badge PWA Instalado */}
+          <PWABadge className="hidden md:inline-flex mr-2" />
+
           {/* Indicador de Conexão WebSocket */}
           <ConnectionIndicator className="mr-1" />
 
