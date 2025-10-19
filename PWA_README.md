@@ -2,6 +2,17 @@
 
 Este documento descreve a implementação e funcionalidades do PWA (Progressive Web App) do Sistema Integrado de Segurança Pública de Porto Velho.
 
+## 📖 Abordagem Oficial Next.js 15
+
+Esta implementação segue a **documentação oficial do Next.js 15** para PWA:
+- ✅ Usa `app/manifest.ts` (TypeScript) em vez de `public/manifest.json`
+- ✅ Next.js gera automaticamente `manifest.webmanifest` e adiciona link no HTML
+- ✅ Metadata API com exports `metadata` e `viewport` separados
+- ✅ Service Worker gerenciado por `next-pwa` (Next.js não tem SW built-in)
+- ✅ Suporte completo para App Router
+
+**Referência**: https://nextjs.org/docs/app/guides/progressive-web-apps
+
 ## ✨ Funcionalidades PWA Implementadas
 
 ### 🎯 Instalação
@@ -32,9 +43,10 @@ Este documento descreve a implementação e funcionalidades do PWA (Progressive 
 ## 📦 Arquivos PWA
 
 ### Configuração Principal
-- `next.config.mjs` - Configuração do next-pwa
-- `public/manifest.json` - Web App Manifest
+- `app/manifest.ts` - Web App Manifest (gerado automaticamente pelo Next.js 15)
+- `next.config.mjs` - Configuração do next-pwa para Service Worker
 - `public/offline.html` - Página offline customizada
+- `app/layout.tsx` - Metadata e Viewport exports
 
 ### Ícones
 - `public/icons/icon-*.png` - Ícones em diversos tamanhos (16px a 512px)
@@ -97,23 +109,29 @@ npm run generate-icons
 
 ### Alterar Cores do Tema
 
-Edite `public/manifest.json`:
+Edite `app/manifest.ts`:
 
-```json
-{
-  "theme_color": "#003DA5",
-  "background_color": "#ffffff"
+```typescript
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    theme_color: "#003DA5",
+    background_color: "#ffffff",
+    // ... resto da configuração
+  }
 }
 ```
 
 ### Alterar Nome do App
 
-Edite `public/manifest.json`:
+Edite `app/manifest.ts`:
 
-```json
-{
-  "name": "Novo Nome Completo",
-  "short_name": "Nome Curto"
+```typescript
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: "Novo Nome Completo",
+    short_name: "Nome Curto",
+    // ... resto da configuração
+  }
 }
 ```
 
@@ -123,19 +141,53 @@ Edite `public/manifest.json`:
 2. **Regenere**: Execute `npm run generate-icons`
 3. **Teste**: Build e instale o PWA
 
+### Manifest Dinâmico (Opcional)
+
+O `app/manifest.ts` permite gerar manifestos dinâmicos:
+
+```typescript
+import type { MetadataRoute } from 'next'
+
+export default function manifest(): MetadataRoute.Manifest {
+  // Ler variáveis de ambiente
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'SISP'
+
+  return {
+    name: appName,
+    // Pode buscar dados de API, ler configs, etc.
+  }
+}
+```
+
+**Vantagens**:
+- Type-safe com TypeScript
+- Pode ser gerado dinamicamente
+- Detectado automaticamente pelo Next.js
+- Melhor DX (Developer Experience)
+
 ### Adicionar Atalhos (Shortcuts)
 
-Edite `public/manifest.json` → seção `shortcuts`:
+Edite `app/manifest.ts` → seção `shortcuts`:
 
-```json
-{
-  "shortcuts": [
-    {
-      "name": "Nova Funcionalidade",
-      "url": "/nova-rota",
-      "icons": [{ "src": "/icons/icon-nova-96x96.png", "sizes": "96x96" }]
-    }
-  ]
+```typescript
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    // ... outras configs
+    shortcuts: [
+      {
+        name: 'Nova Funcionalidade',
+        short_name: 'Nova',
+        url: '/nova-rota',
+        icons: [
+          {
+            src: '/icons/icon-nova-96x96.png',
+            sizes: '96x96',
+            type: 'image/png'
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 

@@ -5,9 +5,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  pwaConfig: {
-    withPWA: true
-  },
   devIndicators: false,
   images: {
     unoptimized: true,
