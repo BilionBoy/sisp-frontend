@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/lib/contexts/sidebar-context"
+import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
 const navigation = [
   {
@@ -36,6 +37,10 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const { isOpen, isCollapsed, closeSidebar, setCollapsed } = useSidebar()
+  const { isFullscreen } = useFullscreen()
+
+  // Ocultar sidebar quando em fullscreen
+  if (isFullscreen) return null
 
   // Fechar sidebar ao mudar de rota (mobile)
   useEffect(() => {

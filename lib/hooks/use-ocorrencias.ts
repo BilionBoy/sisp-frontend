@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { ocorrenciasAPI } from "@/lib/services/ocorrencias-api"
 import { ocorrenciasAPIToIncidents, ocorrenciaAPIToIncident } from "@/lib/mappers/ocorrencia-mapper"
+import { tiposCrimeAPI } from "@/lib/services/tipos-crime-api"
 import type { Incident } from "@/lib/types/map"
 import type { OcorrenciaAPI, OcorrenciaFilters, CreateOcorrenciaPayload } from "@/lib/types/ocorrencia-api"
 
@@ -37,8 +38,15 @@ export function useOcorrencias(filters?: OcorrenciaFilters): UseOcorrenciasRetur
       setIsLoading(true)
       setError(null)
 
+      // OTIMIZAÇÃO CRÍTICA: Pre-carregar cache de tipos_crime ANTES de processar ocorrências
+      // Isso evita centenas de requisições simultâneas (ERR_INSUFFICIENT_RESOURCES)
+      await tiposCrimeAPI.listAtivos().catch(err => {
+        console.warn('Erro ao pre-carregar tipos de crime, usando fallback:', err)
+        // Continua mesmo se falhar - mapper tem fallback
+      })
+
       const ocorrencias = await ocorrenciasAPI.list(filters)
-      const mappedIncidents = ocorrenciasAPIToIncidents(ocorrencias)
+      const mappedIncidents = await ocorrenciasAPIToIncidents(ocorrencias)
 
       setIncidents(mappedIncidents)
     } catch (err) {
@@ -63,7 +71,7 @@ export function useOcorrencias(filters?: OcorrenciaFilters): UseOcorrenciasRetur
   const createOcorrencia = useCallback(async (payload: CreateOcorrenciaPayload): Promise<Incident> => {
     try {
       const novaOcorrencia = await ocorrenciasAPI.create(payload)
-      const incident = ocorrenciaAPIToIncident(novaOcorrencia)
+      const incident = await ocorrenciaAPIToIncident(novaOcorrencia)
 
       // Adiciona ao estado local
       setIncidents(prev => [incident, ...prev])
@@ -85,7 +93,7 @@ export function useOcorrencias(filters?: OcorrenciaFilters): UseOcorrenciasRetur
   ): Promise<Incident> => {
     try {
       const ocorrenciaAtualizada = await ocorrenciasAPI.update(id, { ocorrencia: payload })
-      const incident = ocorrenciaAPIToIncident(ocorrenciaAtualizada)
+      const incident = await ocorrenciaAPIToIncident(ocorrenciaAtualizada)
 
       // Atualiza no estado local
       setIncidents(prev =>
@@ -158,7 +166,7 @@ export function useOcorrencia(id: number | null) {
         setError(null)
 
         const ocorrencia = await ocorrenciasAPI.getById(id)
-        const mappedIncident = ocorrenciaAPIToIncident(ocorrencia)
+        const mappedIncident = await ocorrenciaAPIToIncident(ocorrencia)
 
         setIncident(mappedIncident)
       } catch (err) {

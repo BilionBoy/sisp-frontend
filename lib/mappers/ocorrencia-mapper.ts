@@ -6,13 +6,29 @@ import type { OcorrenciaAPI } from "@/lib/types/ocorrencia-api"
 import type { Incident } from "@/lib/types/map"
 import { getTipoCrimeNome } from "@/lib/data/tipos-crime"
 import { getBairroInfo, getLocalizacaoCompleta } from "@/lib/data/bairros"
+import { getTipoCrimeById } from "@/lib/services/tipos-crime-api"
+import { gravidadeToPriority } from "@/lib/types/tipos-crime-api"
 
 /**
- * Mapeia prioridade baseado no tipo de crime e outros fatores
+ * Mapeia prioridade baseado na gravidade do tipo de crime
+ *
+ * NOTA: Esta função é assíncrona pois busca a gravidade da API
+ * Fallback: Se não conseguir buscar, usa lógica antiga baseada em IDs hardcoded
  */
-function mapPriority(ocorrencia: OcorrenciaAPI): "high" | "medium" | "low" {
-  // IDs de crimes graves (baseado nos dados)
-  // TODO: Ajustar baseado na tabela real de tipos de crimes
+async function mapPriority(ocorrencia: OcorrenciaAPI): Promise<"high" | "medium" | "low"> {
+  try {
+    // Tentar buscar gravidade do tipo de crime da API
+    const tipoCrime = await getTipoCrimeById(ocorrencia.id_tipo_crime)
+
+    if (tipoCrime) {
+      // Mapear gravidade para prioridade
+      return gravidadeToPriority(tipoCrime.gravidade)
+    }
+  } catch (error) {
+    console.warn(`Erro ao buscar tipo de crime ${ocorrencia.id_tipo_crime}:`, error)
+  }
+
+  // Fallback: Lógica antiga baseada em IDs e fatores
   const crimesGravesIds = [1, 2, 3, 4, 5] // Homicídio, Latrocínio, etc
 
   if (crimesGravesIds.includes(ocorrencia.id_tipo_crime)) {
@@ -73,8 +89,9 @@ function parseCoordinate(coord: string | number): number {
 
 /**
  * Converte OcorrenciaAPI para Incident (formato do frontend)
+ * NOTA: Agora é assíncrona pois busca gravidade do tipo de crime da API
  */
-export function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Incident {
+export async function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Promise<Incident> {
   // Nome do tipo de crime (usando mapeamento real)
   const tipo = getTipoCrimeNome(ocorrencia.id_tipo_crime)
 
@@ -95,6 +112,9 @@ export function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Incident {
   if (ocorrencia.numero_endereco) addressParts.push(ocorrencia.numero_endereco)
   const address = addressParts.length > 0 ? addressParts.join(', ') : undefined
 
+  // Buscar prioridade baseada na gravidade do tipo de crime
+  const priority = await mapPriority(ocorrencia)
+
   return {
     id: generateIncidentId(ocorrencia.id_ocorrencia, ocorrencia.numero_bo),
     type: tipo,
@@ -105,7 +125,7 @@ export function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Incident {
     coordinates: [lat, lng],
     timestamp: ocorrencia.data_registro,
     status: mapStatus(ocorrencia.status_ocorrencia),
-    priority: mapPriority(ocorrencia),
+    priority,
     bairro,
     zone: bairroInfo.zona,
     // Dados adicionais
@@ -122,9 +142,10 @@ export function ocorrenciaAPIToIncident(ocorrencia: OcorrenciaAPI): Incident {
 
 /**
  * Converte array de OcorrenciaAPI para array de Incident
+ * NOTA: Agora é assíncrona para processar todas as ocorrências em paralelo
  */
-export function ocorrenciasAPIToIncidents(ocorrencias: OcorrenciaAPI[]): Incident[] {
-  return ocorrencias.map(ocorrenciaAPIToIncident)
+export async function ocorrenciasAPIToIncidents(ocorrencias: OcorrenciaAPI[]): Promise<Incident[]> {
+  return Promise.all(ocorrencias.map(ocorrenciaAPIToIncident))
 }
 
 /**

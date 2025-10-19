@@ -1,57 +1,283 @@
-### Listar ocorrencias (GET)
-GET http://10.0.1.66:3000/api/v1/ocorrencias
-Accept: application/json
+### SISP360 API - Exemplos de Requisições HTTP
+### Use esta file com REST Client (VS Code extension) ou similares
+### Base URL: http://localhost:3000
 
-### Filtrar ocorrencias por BO (GET)
-GET http://10.0.1.66:3000/api/v1/ocorrencias?numero_bo=BO2015345110
-Accept: application/json
+@baseUrl = http://localhost:3000/api/v1
 
-### Criar nova ocorrencia (POST)
-POST http://10.0.1.66:3000/api/v1/ocorrencias/new
+###############################################
+### ZONAS
+###############################################
+
+### Listar todas as zonas (paginado)
+GET {{baseUrl}}/zonas
 Content-Type: application/json
-Accept: application/json
+
+### Listar zonas com paginação customizada
+GET {{baseUrl}}/zonas?page=1&items=5
+Content-Type: application/json
+
+### Buscar zona específica (ID da primeira zona no banco: 9)
+GET {{baseUrl}}/zonas/9
+Content-Type: application/json
+
+### Criar nova zona
+POST {{baseUrl}}/zonas
+Content-Type: application/json
+
+{
+  "zona": {
+    "nome_zona": "Zona Teste",
+    "descricao": "Zona criada para teste da API",
+    "area_km2": 100.5,
+    "populacao_estimada": 50000
+  }
+}
+
+###############################################
+### BAIRROS
+###############################################
+
+### Listar todos os bairros
+GET {{baseUrl}}/bairros
+Content-Type: application/json
+
+### Listar bairros de uma zona específica
+GET {{baseUrl}}/bairros?id_zona=9
+Content-Type: application/json
+
+### Buscar bairro específico
+GET {{baseUrl}}/bairros/1
+Content-Type: application/json
+
+### Filtrar bairros por status
+GET {{baseUrl}}/bairros?status_bairro=Ativo
+Content-Type: application/json
+
+###############################################
+### TIPOS DE CRIME
+###############################################
+
+### Listar todos os tipos de crime
+GET {{baseUrl}}/tipos_crime
+Content-Type: application/json
+
+### Filtrar tipos de crime por categoria
+GET {{baseUrl}}/tipos_crime?categoria=CVP
+Content-Type: application/json
+
+### Filtrar tipos de crime ativos
+GET {{baseUrl}}/tipos_crime?ativo=true
+Content-Type: application/json
+
+### Buscar tipo de crime específico
+GET {{baseUrl}}/tipos_crime/17
+Content-Type: application/json
+
+###############################################
+### OCORRÊNCIAS
+###############################################
+
+### Listar todas as ocorrências (paginado)
+GET {{baseUrl}}/ocorrencias?page=1&items=10
+Content-Type: application/json
+
+### Filtrar ocorrências por bairro
+GET {{baseUrl}}/ocorrencias?id_bairro=1
+Content-Type: application/json
+
+### Filtrar ocorrências por tipo de crime
+GET {{baseUrl}}/ocorrencias?id_tipo_crime=17
+Content-Type: application/json
+
+### Filtrar ocorrências por período do dia
+GET {{baseUrl}}/ocorrencias?periodo_dia=Noite
+Content-Type: application/json
+
+### Filtrar ocorrências por data
+GET {{baseUrl}}/ocorrencias?data_ocorrencia=2024-01-15
+Content-Type: application/json
+
+### Filtrar com múltiplos parâmetros
+GET {{baseUrl}}/ocorrencias?id_bairro=1&periodo_dia=Noite&page=1&items=5
+Content-Type: application/json
+
+### Buscar ocorrência específica
+GET {{baseUrl}}/ocorrencias/1
+Content-Type: application/json
+
+### Criar nova ocorrência
+POST {{baseUrl}}/ocorrencias
+Content-Type: application/json
 
 {
   "ocorrencia": {
-    "numero_bo": "BO2025101810",
-    "id_tipo_crime": 23,
+    "numero_bo": "BO-2024-TEST-001",
+    "id_tipo_crime": 17,
     "id_bairro": 1,
-    "data_ocorrencia": "2025-10-18",
-    "hora_ocorrencia": "21:00",
-    "dia_semana": "Sábado",
+    "data_ocorrencia": "2024-10-19",
+    "hora_ocorrencia": "22:30:00",
+    "dia_semana": "Sabado",
     "periodo_dia": "Noite",
-    "latitude_ocorrencia": -8.7496,
-    "longitude_ocorrencia": -63.89237,
+    "latitude_ocorrencia": -8.76077,
+    "longitude_ocorrencia": -63.90027,
     "logradouro": "Rua Teste",
-    "numero_endereco": "123",
-    "ponto_referencia": "Próximo ao mercado",
-    "descricao_ocorrencia": "Teste de criação",
-    "vitimas": 1,
-    "valor_prejuizo": 1000.0,
-    "recuperado": false,
-    "status_ocorrencia": "Registrada",
-    "origem_registro": "Sistema Integrado",
-    "data_registro": "2025-10-18T19:00:00Z",
-    "usuario_registro": 1
+    "descricao_ocorrencia": "Teste de API",
+    "status_ocorrencia": "Registrado"
   }
 }
 
-### Mostrar ocorrencia pelo ID (GET)
-GET http://10.0.1.66:3000/api/v1/ocorrencias/1
-Accept: application/json
+###############################################
+### USUÁRIOS
+###############################################
 
-### Atualizar ocorrencia pelo ID (PUT)
-PUT http://10.0.1.66:3000/api/v1/ocorrencias/1
+### Listar todos os usuários
+GET {{baseUrl}}/usuarios
 Content-Type: application/json
-Accept: application/json
+
+### Filtrar usuários ativos
+GET {{baseUrl}}/usuarios?ativo=true
+Content-Type: application/json
+
+### Filtrar por tipo de usuário
+GET {{baseUrl}}/usuarios?tipo_usuario=Administrador
+Content-Type: application/json
+
+### Buscar usuário específico
+GET {{baseUrl}}/usuarios/3
+Content-Type: application/json
+
+###############################################
+### INDICADORES SOCIOECONÔMICOS
+###############################################
+
+### Listar todos os indicadores
+GET {{baseUrl}}/indicadores_socioeconomicos
+Content-Type: application/json
+
+### Filtrar por bairro
+GET {{baseUrl}}/indicadores_socioeconomicos?id_bairro=1
+Content-Type: application/json
+
+### Filtrar por ano de referência
+GET {{baseUrl}}/indicadores_socioeconomicos?ano_referencia=2024
+Content-Type: application/json
+
+### Buscar indicador específico
+GET {{baseUrl}}/indicadores_socioeconomicos/1
+Content-Type: application/json
+
+###############################################
+### AUDITORIAS
+###############################################
+
+### Listar todas as auditorias
+GET {{baseUrl}}/auditorias?page=1&items=20
+Content-Type: application/json
+
+### Filtrar por usuário
+GET {{baseUrl}}/auditorias?id_usuario=3
+Content-Type: application/json
+
+### Filtrar por ação
+GET {{baseUrl}}/auditorias?acao=INSERT
+Content-Type: application/json
+
+### Filtrar por tabela afetada
+GET {{baseUrl}}/auditorias?tabela_afetada=ocorrencias
+Content-Type: application/json
+
+### Buscar auditoria específica
+GET {{baseUrl}}/auditorias/1
+Content-Type: application/json
+
+###############################################
+### ESTATÍSTICAS DE BAIRRO
+###############################################
+
+### Listar todas as estatísticas
+GET {{baseUrl}}/estatisticas_bairro
+Content-Type: application/json
+
+### Filtrar por bairro
+GET {{baseUrl}}/estatisticas_bairro?id_bairro=1
+Content-Type: application/json
+
+### Filtrar por ano e mês
+GET {{baseUrl}}/estatisticas_bairro?ano=2024&mes=10
+Content-Type: application/json
+
+###############################################
+### COMPLEXOS HABITACIONAIS
+###############################################
+
+### Listar todos os complexos
+GET {{baseUrl}}/complexos_habitacionais
+Content-Type: application/json
+
+### Filtrar por bairro
+GET {{baseUrl}}/complexos_habitacionais?id_bairro=1
+Content-Type: application/json
+
+### Filtrar por tipo
+GET {{baseUrl}}/complexos_habitacionais?tipo_complexo=Residencial
+Content-Type: application/json
+
+### Filtrar com segurança
+GET {{baseUrl}}/complexos_habitacionais?possui_seguranca=true
+Content-Type: application/json
+
+###############################################
+### PESQUISAS
+###############################################
+
+### Listar todas as pesquisas
+GET {{baseUrl}}/pesquisas
+Content-Type: application/json
+
+### Filtrar por bairro
+GET {{baseUrl}}/pesquisas?id_bairro=1
+Content-Type: application/json
+
+### Filtrar por complexo
+GET {{baseUrl}}/pesquisas?id_complexo=1
+Content-Type: application/json
+
+### Filtrar por escolaridade
+GET {{baseUrl}}/pesquisas?escolaridade=Superior
+Content-Type: application/json
+
+###############################################
+### EXEMPLOS DE UPDATE E DELETE
+###############################################
+
+### Atualizar zona (exemplo - substitua :id)
+PATCH {{baseUrl}}/zonas/100
+Content-Type: application/json
+
+{
+  "zona": {
+    "descricao": "Descrição atualizada"
+  }
+}
+
+### Deletar zona (exemplo - substitua :id)
+DELETE {{baseUrl}}/zonas/100
+Content-Type: application/json
+
+###############################################
+### TESTES DE ERRO
+###############################################
+
+### Buscar registro inexistente (deve retornar 404)
+GET {{baseUrl}}/zonas/999999
+Content-Type: application/json
+
+### Criar com dados inválidos (deve retornar 422)
+POST {{baseUrl}}/ocorrencias
+Content-Type: application/json
 
 {
   "ocorrencia": {
-    "status_ocorrencia": "Concluída",
-    "descricao_ocorrencia": "Atualização de teste"
+    "numero_bo": ""
   }
 }
-
-### Deletar ocorrencia pelo ID (DELETE)
-DELETE http://10.0.1.66:3000/api/v1/ocorrencias/1
-Accept: application/json

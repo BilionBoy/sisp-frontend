@@ -11,9 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSidebar } from "@/lib/contexts/sidebar-context"
+import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
 export function Header() {
   const { toggleSidebar } = useSidebar()
+  const { isFullscreen } = useFullscreen()
+
+  // Ocultar header quando em fullscreen
+  if (isFullscreen) return null
 
   return (
     <header className="sticky top-0 z-[1100] w-full border-b-4 border-secondary bg-white shadow-sm">

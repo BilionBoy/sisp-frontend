@@ -45,7 +45,6 @@ export function CreateOcorrenciaModal({
 
   // Dados do formulário - campos essenciais
   const [idTipoCrime, setIdTipoCrime] = useState<number>(23)
-  const [prioridade, setPrioridade] = useState<"high" | "medium" | "low">("medium")
   const [descricao, setDescricao] = useState("")
 
   // Campos preenchidos automaticamente
@@ -95,17 +94,6 @@ export function CreateOcorrenciaModal({
       setIsSubmitting(true)
       const { diaSemana, periodoDia } = calcularDiaSemanaEPeriodo()
 
-      // Mapear prioridade para texto em português
-      const prioridadeTexto = {
-        high: "Alta",
-        medium: "Média",
-        low: "Baixa"
-      }[prioridade]
-
-      // Adicionar prioridade como metadata na descrição
-      // A API não possui campo de prioridade, então incluímos na descrição
-      const descricaoComPrioridade = `[PRIORIDADE: ${prioridadeTexto}]\n\n${descricao}`
-
       const payload = buildCreatePayload({
         numero_bo: numeroBO,
         id_tipo_crime: idTipoCrime,
@@ -119,7 +107,7 @@ export function CreateOcorrenciaModal({
         logradouro,
         numero_endereco: numeroEndereco,
         ponto_referencia: pontoReferencia,
-        descricao_ocorrencia: descricaoComPrioridade,
+        descricao_ocorrencia: descricao,
         vitimas,
         valor_prejuizo: valorPrejuizo,
         recuperado,
@@ -144,7 +132,6 @@ export function CreateOcorrenciaModal({
 
   const resetForm = () => {
     setIdTipoCrime(23)
-    setPrioridade("medium")
     setDescricao("")
   }
 
@@ -198,35 +185,6 @@ export function CreateOcorrenciaModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="prioridade">Prioridade</Label>
-              <Select value={prioridade} onValueChange={(v) => setPrioridade(v as "high" | "medium" | "low")}>
-                <SelectTrigger id="prioridade">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <span>Alta Prioridade</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <span>Média Prioridade</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="low">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span>Baixa Prioridade</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="descricao">
                 Descrição Detalhada <span className="text-red-500">*</span>
               </Label>
@@ -246,7 +204,7 @@ export function CreateOcorrenciaModal({
 
             {/* Informações automáticas */}
             <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground">Resumo da Ocorrência:</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground">Dados Automáticos:</h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-muted-foreground">Número BO:</span>
@@ -263,17 +221,6 @@ export function CreateOcorrenciaModal({
                 <div>
                   <span className="text-muted-foreground">Status:</span>
                   <span className="ml-2 font-medium">Registrada</span>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">Prioridade:</span>
-                  <span className="ml-2 font-medium inline-flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full ${
-                      prioridade === "high" ? "bg-red-500" :
-                      prioridade === "medium" ? "bg-yellow-500" :
-                      "bg-green-500"
-                    }`}></div>
-                    {prioridade === "high" ? "Alta" : prioridade === "medium" ? "Média" : "Baixa"}
-                  </span>
                 </div>
               </div>
             </div>

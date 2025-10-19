@@ -23,26 +23,36 @@ export function PriorityWidget({
   onPrioritySelect
 }: PriorityWidgetProps) {
   // Estado de collapse com persistência no localStorage
-  const [isCollapsed, setIsCollapsed] = useState(() => {
+  // IMPORTANTE: Inicializar com false para evitar hydration error
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [hasMounted, setHasMounted] = useState(false)
+
+  // Carregar estado salvo apenas no cliente (após mount)
+  useEffect(() => {
+    setHasMounted(true)
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('priorityWidget.collapsed')
-      return saved ? JSON.parse(saved) : false
+      if (saved) {
+        setIsCollapsed(JSON.parse(saved))
+      }
     }
-    return false
-  })
+  }, [])
 
   // Salvar estado no localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (hasMounted && typeof window !== 'undefined') {
       localStorage.setItem('priorityWidget.collapsed', JSON.stringify(isCollapsed))
     }
-  }, [isCollapsed])
+  }, [isCollapsed, hasMounted])
 
   // Contar ocorrências por prioridade
+  // IMPORTANTE: Garantir que incidents é um array
+  const safeIncidents = Array.isArray(incidents) ? incidents : []
+
   const counts = {
-    high: incidents.filter(inc => inc.priority === "high").length,
-    medium: incidents.filter(inc => inc.priority === "medium").length,
-    low: incidents.filter(inc => inc.priority === "low").length,
+    high: safeIncidents.filter(inc => inc.priority === "high").length,
+    medium: safeIncidents.filter(inc => inc.priority === "medium").length,
+    low: safeIncidents.filter(inc => inc.priority === "low").length,
   }
 
   const priorities = [

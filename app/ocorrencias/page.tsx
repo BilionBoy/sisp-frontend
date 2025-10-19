@@ -37,20 +37,27 @@ export default function OcorrenciasPage() {
   const [initialCoordinates, setInitialCoordinates] = useState<[number, number] | undefined>(undefined)
 
   // Estado de collapse da lista de ocorrências
-  const [isListCollapsed, setIsListCollapsed] = useState(() => {
+  // IMPORTANTE: Inicializar com false para evitar hydration error
+  const [isListCollapsed, setIsListCollapsed] = useState(false)
+  const [hasMounted, setHasMounted] = useState(false)
+
+  // Carregar estado salvo apenas no cliente (após mount)
+  useEffect(() => {
+    setHasMounted(true)
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ocorrenciasList.collapsed')
-      return saved ? JSON.parse(saved) : false
+      if (saved) {
+        setIsListCollapsed(JSON.parse(saved))
+      }
     }
-    return false
-  })
+  }, [])
 
   // Salvar estado no localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (hasMounted && typeof window !== 'undefined') {
       localStorage.setItem('ocorrenciasList.collapsed', JSON.stringify(isListCollapsed))
     }
-  }, [isListCollapsed])
+  }, [isListCollapsed, hasMounted])
 
   // Obter estado da sidebar
   const { isCollapsed } = useSidebar()

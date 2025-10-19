@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card"
 import { Clock, MapPin as MapPinIcon, AlertTriangle, Navigation } from "lucide-react"
 import type { Incident, MapView, TileLayer as TileLayerType } from "@/lib/types/map"
 import { cn } from "@/lib/utils"
+import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
 // Fix for default marker icon in Next.js
 if (typeof window !== "undefined") {
@@ -487,14 +488,19 @@ export function EnhancedInteractiveMap({
   showLegend = true,
   height = "600px",
 }: EnhancedInteractiveMapProps) {
+  // Garantir que incidents seja sempre um array
+  const safeIncidents = Array.isArray(incidents) ? incidents : []
+
   const [viewMode, setViewMode] = useState<MapView>("markers")
   const [tileLayer, setTileLayer] = useState<TileLayerType>("osm")
   const [selectedIncident, setSelectedIncident] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [targetPosition, setTargetPosition] = useState<[number, number, number] | null>(null)
   const [shouldFitBounds, setShouldFitBounds] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Usar contexto de fullscreen ao invés de estado local
+  const { isFullscreen, setFullscreen } = useFullscreen()
 
   // Garantir que o componente só renderize no cliente
   useEffect(() => {
@@ -505,7 +511,7 @@ export function EnhancedInteractiveMap({
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isFullscreen) {
-        setIsFullscreen(false)
+        setFullscreen(false)
       }
     }
 
@@ -521,7 +527,7 @@ export function EnhancedInteractiveMap({
         document.body.style.overflow = ""
       }
     }
-  }, [isFullscreen])
+  }, [isFullscreen, setFullscreen])
 
   // URLs das tile layers
   const tileLayerUrls = {
@@ -533,16 +539,16 @@ export function EnhancedInteractiveMap({
 
   // Estatísticas para a legenda
   const legendItems = useMemo(() => {
-    const highPriority = incidents.filter((i) => i.priority === "high").length
-    const mediumPriority = incidents.filter((i) => i.priority === "medium").length
-    const lowPriority = incidents.filter((i) => i.priority === "low").length
+    const highPriority = safeIncidents.filter((i) => i.priority === "high").length
+    const mediumPriority = safeIncidents.filter((i) => i.priority === "medium").length
+    const lowPriority = safeIncidents.filter((i) => i.priority === "low").length
 
     return [
       { label: "Alta Prioridade", color: "#ef4444", count: highPriority },
       { label: "Média Prioridade", color: "#f59e0b", count: mediumPriority },
       { label: "Baixa Prioridade", color: "#10b981", count: lowPriority },
     ]
-  }, [incidents])
+  }, [safeIncidents])
 
   const handleMarkerClick = useCallback(
     (incidentId: string) => {
@@ -553,10 +559,8 @@ export function EnhancedInteractiveMap({
   )
 
   const handleToggleFullscreen = useCallback(() => {
-    // Usar fullscreen simulado ao invés da API nativa
-    // Isso permite que os widgets laterais continuem visíveis
-    setIsFullscreen(!isFullscreen)
-  }, [isFullscreen])
+    setFullscreen(!isFullscreen)
+  }, [isFullscreen, setFullscreen])
 
   const handleResetView = useCallback(() => {
     setShouldFitBounds(true)
@@ -605,12 +609,12 @@ export function EnhancedInteractiveMap({
         />
 
         {/* Heatmap Layer */}
-        {viewMode === "heat" && <HeatmapLayer incidents={incidents} />}
+        {viewMode === "heat" && <HeatmapLayer incidents={safeIncidents} />}
 
         {/* Cluster Layer */}
         {viewMode === "clusters" && (
           <ClusterLayer
-            incidents={incidents}
+            incidents={safeIncidents}
             onIncidentClick={handleMarkerClick}
             selectedIncident={selectedIncident}
           />
@@ -618,7 +622,7 @@ export function EnhancedInteractiveMap({
 
         {/* Marker Layer */}
         {viewMode === "markers" &&
-          incidents.map((incident) => (
+          safeIncidents.map((incident) => (
             <Marker
               key={incident.id}
               position={[incident.lat, incident.lng]}
@@ -634,7 +638,7 @@ export function EnhancedInteractiveMap({
           ))}
 
         {/* Auto-ajustar bounds */}
-        <MapBoundsHandler incidents={incidents} shouldFit={shouldFitBounds} />
+        <MapBoundsHandler incidents={safeIncidents} shouldFit={shouldFitBounds} />
 
         {/* Navigation Controller */}
         <MapNavigationController
@@ -656,7 +660,7 @@ export function EnhancedInteractiveMap({
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
           onResetView={handleResetView}
-          incidentCount={incidents.length}
+          incidentCount={safeIncidents.length}
         />
       )}
 

@@ -5,6 +5,8 @@ import "./globals.css"
 import "leaflet/dist/leaflet.css"
 import "../styles/map.css"
 import { SidebarProvider } from "@/lib/contexts/sidebar-context"
+import { FullscreenProvider } from "@/lib/contexts/fullscreen-context"
+import { Providers } from "./providers"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,7 +34,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${robotoMono.variable}`}>
       <body>
-        <SidebarProvider>{children}</SidebarProvider>
+        <Providers>
+          <FullscreenProvider>
+            <SidebarProvider>{children}</SidebarProvider>
+          </FullscreenProvider>
+        </Providers>
       </body>
     </html>
   )
