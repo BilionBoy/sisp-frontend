@@ -33,44 +33,47 @@ export function PWAInstallBanner() {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
     setIsIOS(iOS)
 
-    // Se NÃO está instalado, verificar se pode mostrar banner
-    if (!isPWA) {
-      // Verificar se foi permanentemente dismissado
-      const permanentlyDismissed = localStorage.getItem('sisp-install-banner-dismissed-permanent')
-      if (permanentlyDismissed) {
-        return
-      }
-
-      // Verificar dismiss temporário (3 dias)
-      const dismissed = localStorage.getItem('sisp-install-banner-dismissed')
-      if (dismissed) {
-        const dismissedTime = parseInt(dismissed)
-        const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24)
-
-        if (daysSinceDismissed < 3) {
-          return
-        } else {
-          localStorage.removeItem('sisp-install-banner-dismissed')
-        }
-      }
-
-      // Delay de 3 segundos antes de mostrar banner
-      const timer = setTimeout(() => {
-        setIsVisible(true)
-      }, 3000)
-
-      return () => clearTimeout(timer)
+    // Se JÁ está instalado, não fazer nada
+    if (isPWA) {
+      return
     }
 
-    // Capturar evento beforeinstallprompt
+    // Se NÃO está instalado, configurar banner e evento
+    // Verificar se foi permanentemente dismissado
+    const permanentlyDismissed = localStorage.getItem('sisp-install-banner-dismissed-permanent')
+    if (permanentlyDismissed) {
+      return
+    }
+
+    // Verificar dismiss temporário (3 dias)
+    const dismissed = localStorage.getItem('sisp-install-banner-dismissed')
+    if (dismissed) {
+      const dismissedTime = parseInt(dismissed)
+      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24)
+
+      if (daysSinceDismissed < 3) {
+        return
+      } else {
+        localStorage.removeItem('sisp-install-banner-dismissed')
+      }
+    }
+
+    // Capturar evento beforeinstallprompt (Chrome/Edge/Android)
     const handler = (e: Event) => {
       e.preventDefault()
+      console.log('[PWA] beforeinstallprompt event captured')
       setDeferredPrompt(e as BeforeInstallPromptEvent)
     }
 
     window.addEventListener('beforeinstallprompt', handler)
 
+    // Delay de 3 segundos antes de mostrar banner
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 3000)
+
     return () => {
+      clearTimeout(timer)
       window.removeEventListener('beforeinstallprompt', handler)
     }
   }, [])
@@ -79,21 +82,32 @@ export function PWAInstallBanner() {
    * Mostrar prompt de instalação (Chrome/Android)
    */
   const handleInstall = async () => {
+    console.log('[PWA] handleInstall called, deferredPrompt:', !!deferredPrompt, 'isIOS:', isIOS)
+
     if (!deferredPrompt) {
+      console.log('[PWA] No deferred prompt available')
       // Se não tem prompt nativo, scroll para instruções iOS
       if (isIOS) {
+        console.log('[PWA] iOS detected, scrolling to instructions')
         window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        console.warn('[PWA] No install prompt available. App may already be installed or browser does not support PWA installation.')
       }
       return
     }
 
     try {
+      console.log('[PWA] Showing install prompt...')
       await deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
+      console.log('[PWA] User choice:', outcome)
 
       if (outcome === 'accepted') {
+        console.log('[PWA] Installation accepted!')
         setIsVisible(false)
         localStorage.setItem('sisp-install-banner-dismissed-permanent', 'true')
+      } else {
+        console.log('[PWA] Installation dismissed by user')
       }
 
       setDeferredPrompt(null)
