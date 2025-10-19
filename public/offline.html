@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISP - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 500px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .circles {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .circle-yellow {
+      background-color: #FFD700;
+    }
+
+    .circle-green {
+      background-color: #76BC21;
+    }
+
+    .circle-blue {
+      background-color: #003DA5;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 2rem;
+    }
+
+    .offline-icon {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.9;
+    }
+
+    .message {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      opacity: 0.95;
+    }
+
+    .tip {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .retry-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .retry-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .wifi-icon {
+      animation: pulse 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="circles">
+        <div class="circle circle-yellow"></div>
+        <div class="circle circle-green"></div>
+        <div class="circle circle-blue"></div>
+      </div>
+    </div>
+
+    <h1>SISP</h1>
+    <p class="subtitle">Sistema Integrado de Segurança Pública</p>
+
+    <div class="offline-icon wifi-icon">📡</div>
+
+    <p class="message">
+      <strong>Você está offline</strong><br>
+      Sem conexão com a internet no momento
+    </p>
+
+    <p class="message">
+      Verifique sua conexão e tente novamente.<br>
+      Algumas funcionalidades podem estar disponíveis offline.
+    </p>
+
+    <button class="retry-button" onclick="window.location.reload()">
+      Tentar Novamente
+    </button>
+
+    <div class="tip">
+      💡 <strong>Dica:</strong> Quando online novamente, o aplicativo irá sincronizar automaticamente.
+    </div>
+  </div>
+</body>
+</html>

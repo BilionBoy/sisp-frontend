@@ -1,0 +1,38 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#003DA5" rx="64"/>
+
+  <!-- Porto Velho Logo - Três Círculos -->
+  <g transform="translate(256, 180)">
+    <!-- Círculo Amarelo -->
+    <circle cx="-80" cy="0" r="45" fill="#FFD700"/>
+
+    <!-- Círculo Verde -->
+    <circle cx="0" cy="0" r="45" fill="#76BC21"/>
+
+    <!-- Círculo Azul -->
+    <circle cx="80" cy="0" r="45" fill="#ffffff"/>
+  </g>
+
+  <!-- Texto SISP -->
+  <text
+    x="256"
+    y="340"
+    font-family="Arial, sans-serif"
+    font-size="100"
+    font-weight="bold"
+    fill="#ffffff"
+    text-anchor="middle"
+  >SISP</text>
+
+  <!-- Subtítulo -->
+  <text
+    x="256"
+    y="395"
+    font-family="Arial, sans-serif"
+    font-size="32"
+    fill="#ffffff"
+    text-anchor="middle"
+    opacity="0.9"
+  >Porto Velho</text>
+</svg>
