@@ -75,6 +75,8 @@ const pwaConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Não gerar manifest.json automaticamente (usamos app/manifest.ts do Next.js 15)
+  buildExcludes: [/manifest\.json$/],
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,

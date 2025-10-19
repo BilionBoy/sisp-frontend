@@ -1,32 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, AlertTriangle } from "lucide-react"
 import { OcorrenciaDetailsMobile } from "@/components/mobile/ocorrencia-details-mobile"
-import { useOcorrenciasQuery } from "@/lib/hooks/use-ocorrencias-query"
+import { useOcorrenciaById } from "@/lib/hooks/use-ocorrencia-by-id"
 import { toast } from "sonner"
 import { Toaster } from "sonner"
-import type { Incident } from "@/lib/types/map"
 
 export default function OcorrenciaDetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params?.id as string
+  const numericId = id ? parseInt(id, 10) : null
 
-  const { incidents, isLoading, updateOcorrencia } = useOcorrenciasQuery()
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
-
-  // Encontrar a ocorrência pelo ID numérico da API
-  useEffect(() => {
-    if (!isLoading && incidents.length > 0 && id) {
-      const numericId = parseInt(id, 10)
-      const incident = incidents.find((inc) => inc._apiData?.id_ocorrencia === numericId)
-      setSelectedIncident(incident || null)
-    }
-  }, [id, incidents, isLoading])
+  // Buscar ocorrência específica por ID (cache-first, depois API)
+  const { incident: selectedIncident, isLoading, updateOcorrencia } = useOcorrenciaById(numericId)
 
   // Handler para voltar
   const handleBack = () => {
@@ -42,9 +32,6 @@ export default function OcorrenciaDetailPage() {
       // ENUM PostgreSQL: 'Registrada', 'Em Investigação', 'Resolvida', 'Arquivada'
       await updateOcorrencia(idOcorrencia, {
         status_ocorrencia: "Resolvida",
-        // Aqui você pode adicionar campos personalizados se a API suportar
-        // observacoes_encerramento: data.observacoes,
-        // resultado_encerramento: data.resultado,
       })
 
       toast.success("Ocorrência encerrada com sucesso", {

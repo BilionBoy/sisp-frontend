@@ -47,7 +47,7 @@ export function useOcorrenciasQuery(filters?: OcorrenciaFilters) {
         await Promise.all(
           ocorrencias.map(oc =>
             cacheDB.set('ocorrencias', String(oc.id_ocorrencia), oc, 10 * 60 * 1000).catch(() => {})
-          )
+          ) 
         )
 
         return ocorrenciasAPIToIncidents(ocorrencias)
