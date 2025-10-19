@@ -1,15 +1,17 @@
 "use client"
 
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { RefreshCw, Filter, SlidersHorizontal } from "lucide-react"
 import { OcorrenciaCardMobile } from "@/components/mobile/ocorrencia-card-mobile"
+import { ConnectionIndicator } from "@/components/connection-indicator"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useInfiniteOcorrencias } from "@/lib/hooks/use-infinite-ocorrencias"
+import { useOcorrenciasCounts } from "@/lib/hooks/use-ocorrencias-counts"
+import { useDebounce } from "@/lib/hooks/use-debounce"
 import { cn } from "@/lib/utils"
-import { Toaster } from "sonner"
 import type { Incident } from "@/lib/types/map"
 
 export default function OcorrenciasMobilePage() {
@@ -19,6 +21,7 @@ export default function OcorrenciasMobilePage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
+  // Hook paginado para dados (50 em 50)
   const {
     incidents: allIncidents,
     isLoading,
@@ -29,15 +32,26 @@ export default function OcorrenciasMobilePage() {
     refresh,
   } = useInfiniteOcorrencias()
 
-  // Filtrar por prioridade
-  const filteredIncidents = priorityFilter === "all"
-    ? allIncidents
-    : allIncidents.filter(inc => inc.priority === priorityFilter)
+  // Hook para contagens totais REAIS (independente da paginação)
+  const { counts: priorityCounts } = useOcorrenciasCounts()
+
+  // Debounce do filtro de prioridade para evitar re-renders excessivos
+  const debouncedPriorityFilter = useDebounce(priorityFilter, 300)
+
+  // Filtrar por prioridade com useMemo
+  const filteredIncidents = useMemo(() => {
+    if (debouncedPriorityFilter === "all") return allIncidents
+    return allIncidents.filter(inc => inc.priority === debouncedPriorityFilter)
+  }, [allIncidents, debouncedPriorityFilter])
 
   // Handler para assumir ocorrência (navegar para detalhes)
   const handleAssumeIncident = useCallback((id: string) => {
-    router.push(`/ocorrencias-mobile/${id}`)
-  }, [router])
+    // Extrair ID numérico do incident para navegação
+    const incident = allIncidents.find(inc => inc.id === id)
+    if (incident?._apiData?.id_ocorrencia) {
+      router.push(`/ocorrencias-mobile/${incident._apiData.id_ocorrencia}`)
+    }
+  }, [router, allIncidents])
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -45,7 +59,7 @@ export default function OcorrenciasMobilePage() {
     try {
       await refresh()
     } finally {
-      setTimeout(() => setIsRefreshing(false), 500)
+      setIsRefreshing(false)
     }
   }, [refresh])
 
@@ -72,14 +86,6 @@ export default function OcorrenciasMobilePage() {
     }
   }, [hasMore, isFetchingMore, loadMore])
 
-  // Contador de ocorrências por prioridade
-  const priorityCounts = {
-    all: allIncidents.length,
-    high: allIncidents.filter(i => i.priority === "high").length,
-    medium: allIncidents.filter(i => i.priority === "medium").length,
-    low: allIncidents.filter(i => i.priority === "low").length,
-  }
-
   const priorityConfig = [
     { value: "all" as const, label: "Todas", color: "bg-gray-500" },
     { value: "high" as const, label: "Alta", color: "bg-red-500" },
@@ -89,8 +95,6 @@ export default function OcorrenciasMobilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Toaster position="top-center" richColors />
-
       {/* Header Fixo */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex h-14 items-center justify-between px-4">
@@ -105,15 +109,18 @@ export default function OcorrenciasMobilePage() {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="h-9 w-9"
-          >
-            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ConnectionIndicator />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="h-9 w-9"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -175,13 +182,20 @@ export default function OcorrenciasMobilePage() {
 
         {/* Error state */}
         {error && !allIncidents.length && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <div className="rounded-full bg-destructive/10 p-3 mb-4">
               <RefreshCw className="h-6 w-6 text-destructive" />
             </div>
-            <h3 className="font-semibold text-lg mb-1">Erro ao carregar</h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              {error.message || "Não foi possível carregar as ocorrências"}
+            <h3 className="font-semibold text-lg mb-1">Sem conexão com servidor</h3>
+            <p className="text-sm text-muted-foreground mb-2 max-w-sm">
+              {error.message?.includes('timeout')
+                ? 'O servidor não respondeu a tempo. Verifique sua conexão.'
+                : error.message?.includes('fetch')
+                ? 'Não foi possível conectar ao servidor.'
+                : error.message || "Não foi possível carregar as ocorrências"}
+            </p>
+            <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+              Certifique-se de estar conectado na mesma rede WiFi que o servidor ou aguarde sincronização.
             </p>
             <Button onClick={handleRefresh} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -243,32 +257,6 @@ export default function OcorrenciasMobilePage() {
           </div>
         )}
       </main>
-
-      {/* Contador fixo no rodapé */}
-      {filteredIncidents.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-4 py-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Exibindo {filteredIncidents.length} de {allIncidents.length} ocorrências
-            </span>
-            {hasMore && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadMore}
-                disabled={isFetchingMore}
-                className="h-8"
-              >
-                {isFetchingMore ? (
-                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                ) : (
-                  "Carregar mais"
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ConnectionIndicator } from "@/components/connection-indicator"
 import { EncerrarOcorrenciaSheet } from "./encerrar-ocorrencia-sheet"
 import { cn } from "@/lib/utils"
 import type { Incident } from "@/lib/types/map"
@@ -27,7 +28,14 @@ import type { Incident } from "@/lib/types/map"
 // Mapa dinâmico (SSR desabilitado)
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full bg-muted animate-pulse flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Carregando mapa...</p>
+      </div>
+    ),
+  }
 )
 const TileLayer = dynamic(
   () => import("react-leaflet").then((mod) => mod.TileLayer),
@@ -54,6 +62,21 @@ export function OcorrenciaDetailsMobile({
   onEncerrar,
 }: OcorrenciaDetailsMobileProps) {
   const [showEncerrarSheet, setShowEncerrarSheet] = useState(false)
+
+  // Configurar ícones do Leaflet (necessário para webpack/bundlers modernos)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Importar Leaflet dinamicamente apenas no cliente
+      import('leaflet').then((L) => {
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        })
+      })
+    }
+  }, [])
 
   // Configuração de prioridade
   const priorityConfig = {
@@ -118,7 +141,7 @@ export function OcorrenciaDetailsMobile({
   const isResolvida = incident.status === "Resolvida"
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-40">
       {/* Header Fixo */}
       <header className="sticky top-0 z-50 bg-background border-b">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -136,6 +159,7 @@ export function OcorrenciaDetailsMobile({
               #{incident.numeroBO || incident.id}
             </p>
           </div>
+          <ConnectionIndicator />
         </div>
       </header>
 

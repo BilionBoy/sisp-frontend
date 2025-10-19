@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Menu } from "lucide-react"
+import { Bell, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -10,11 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useSidebar } from "@/lib/contexts/sidebar-context"
+import { ConnectionIndicator } from "@/components/connection-indicator"
 import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
 export function Header() {
-  const { toggleSidebar } = useSidebar()
   const { isFullscreen } = useFullscreen()
 
   // Ocultar header quando em fullscreen
@@ -24,17 +23,6 @@ export function Header() {
     <header className="sticky top-0 z-[1100] w-full border-b-4 border-secondary bg-white shadow-sm">
       <div className="flex h-16 md:h-20 items-center justify-between px-3 md:px-6">
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Menu Hamburger Mobile */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={toggleSidebar}
-            aria-label="Abrir menu"
-          >
-            <Menu className="h-5 w-5 text-primary" />
-          </Button>
-
           {/* Logo e Título */}
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center shrink-0">
@@ -56,6 +44,9 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Indicador de Conexão WebSocket */}
+          <ConnectionIndicator className="mr-1" />
+
           <Button variant="ghost" size="icon" className="relative hover:bg-secondary/10">
             <Bell className="h-4 w-4 md:h-5 md:w-5 text-primary" />
             <span className="absolute right-1 top-1 flex h-2 w-2">
