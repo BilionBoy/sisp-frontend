@@ -19,10 +19,11 @@ export default function OcorrenciaDetailPage() {
   const { incidents, isLoading, updateOcorrencia } = useOcorrenciasQuery()
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
 
-  // Encontrar a ocorrência pelo ID
+  // Encontrar a ocorrência pelo ID numérico da API
   useEffect(() => {
     if (!isLoading && incidents.length > 0 && id) {
-      const incident = incidents.find((inc) => inc.id === id)
+      const numericId = parseInt(id, 10)
+      const incident = incidents.find((inc) => inc._apiData?.id_ocorrencia === numericId)
       setSelectedIncident(incident || null)
     }
   }, [id, incidents, isLoading])
