@@ -121,12 +121,13 @@ export interface OcorrenciaFilters {
 
 /**
  * Status de ocorrência
+ * VALORES REAIS DO ENUM POSTGRESQL (confirmado):
+ * tipo_status_ocorrencia as enum ('Registrada', 'Em Investigação', 'Resolvida', 'Arquivada')
  */
 export enum StatusOcorrencia {
   REGISTRADA = "Registrada",
-  EM_ATENDIMENTO = "Em Atendimento",
-  EM_ANALISE = "Em Análise",
-  CONCLUIDA = "Concluída",
+  EM_INVESTIGACAO = "Em Investigação",
+  RESOLVIDA = "Resolvida",
   ARQUIVADA = "Arquivada",
 }
 

@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   MapPin,
-  ChevronLeft,
   Camera,
   Shield,
   X,
@@ -36,7 +35,7 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { isOpen, isCollapsed, closeSidebar, toggleCollapsed } = useSidebar()
+  const { isOpen, isCollapsed, closeSidebar, setCollapsed } = useSidebar()
 
   // Fechar sidebar ao mudar de rota (mobile)
   useEffect(() => {
@@ -54,6 +53,19 @@ export function Sidebar() {
       document.body.style.overflow = ""
     }
   }, [isOpen])
+
+  // Handlers para hover (apenas desktop)
+  const handleMouseEnter = () => {
+    if (window.innerWidth >= 768) { // md breakpoint
+      setCollapsed(false)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (window.innerWidth >= 768) { // md breakpoint
+      setCollapsed(true)
+    }
+  }
 
   return (
     <>
@@ -77,6 +89,8 @@ export function Sidebar() {
           // Visibility mobile
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="flex h-full flex-col">
           {/* Header do sidebar (visível em mobile e quando não colapsado) */}
@@ -138,19 +152,6 @@ export function Sidebar() {
                 )
               })}
             </nav>
-          </div>
-
-          {/* Botão de colapsar (apenas desktop) */}
-          <div className="hidden border-t border-sidebar-border p-3 md:block">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleCollapsed}
-              className="w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-            >
-              <ChevronLeft className={cn("h-5 w-5 transition-transform", isCollapsed && "rotate-180")} />
-            </Button>
           </div>
         </div>
       </aside>

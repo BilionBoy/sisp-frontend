@@ -92,8 +92,12 @@ const createCustomIcon = (priority: "high" | "medium" | "low", isActive: boolean
 function HeatmapLayer({ incidents }: { incidents: Incident[] }) {
   const map = useMap()
   const heatLayerRef = useRef<any>(null)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
+    // Marcar como montado
+    isMountedRef.current = true
+
     // Cleanup anterior se existir
     if (heatLayerRef.current && map) {
       try {
@@ -107,6 +111,13 @@ function HeatmapLayer({ incidents }: { incidents: Incident[] }) {
     // Dinamicamente importar leaflet.heat apenas no cliente
     if (typeof window !== "undefined") {
       import("leaflet.heat").then((module) => {
+        // IMPORTANTE: Verificar se componente ainda está montado
+        // A importação é assíncrona, então o componente pode ter sido
+        // desmontado enquanto a Promise estava resolvendo
+        if (!isMountedRef.current) {
+          return // NÃO adicionar layer se componente foi desmontado
+        }
+
         // leaflet.heat usa export default, mas pode vir como module ou module.default
         const heat = module.default || module
 
@@ -138,6 +149,9 @@ function HeatmapLayer({ incidents }: { incidents: Incident[] }) {
 
     // Cleanup function - sempre executado quando componente é desmontado
     return () => {
+      // Marcar como desmontado IMEDIATAMENTE
+      isMountedRef.current = false
+
       if (heatLayerRef.current && map) {
         try {
           map.removeLayer(heatLayerRef.current)
@@ -290,7 +304,7 @@ function ClusterLayer({ incidents, onIncidentClick, selectedIncident }: {
  */
 function IncidentPopupContent({ incident, onViewDetails }: { incident: Incident; onViewDetails: () => void }) {
   return (
-    <div className="p-2 min-w-[250px]">
+    <div className="p-2 bg-background border-2 min-w-[250px]">
       <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="font-semibold text-sm">{incident.id}</h3>
         <Badge
@@ -487,6 +501,28 @@ export function EnhancedInteractiveMap({
     setIsClient(true)
   }, [])
 
+  // Listener para tecla ESC sair do fullscreen
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+
+    if (isFullscreen) {
+      // Adicionar event listener para ESC
+      window.addEventListener("keydown", handleEscape)
+
+      // Prevenir scroll da página quando em fullscreen
+      document.body.style.overflow = "hidden"
+
+      return () => {
+        window.removeEventListener("keydown", handleEscape)
+        document.body.style.overflow = ""
+      }
+    }
+  }, [isFullscreen])
+
   // URLs das tile layers
   const tileLayerUrls = {
     osm: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -517,14 +553,10 @@ export function EnhancedInteractiveMap({
   )
 
   const handleToggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen()
-      setIsFullscreen(false)
-    }
-  }, [])
+    // Usar fullscreen simulado ao invés da API nativa
+    // Isso permite que os widgets laterais continuem visíveis
+    setIsFullscreen(!isFullscreen)
+  }, [isFullscreen])
 
   const handleResetView = useCallback(() => {
     setShouldFitBounds(true)
@@ -552,7 +584,11 @@ export function EnhancedInteractiveMap({
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-full rounded-lg overflow-hidden border border-border", className)}
+      className={cn(
+        "relative w-full rounded-lg overflow-hidden border border-border",
+        isFullscreen && "!fixed inset-0 !z-[999] !rounded-none !border-0 !m-0",
+        className
+      )}
       style={{ height: isFullscreen ? "100vh" : height }}
     >
       <MapContainer
@@ -591,7 +627,7 @@ export function EnhancedInteractiveMap({
                 click: () => handleMarkerClick(incident.id),
               }}
             >
-              <Popup>
+              <Popup className="p-3">
                 <IncidentPopupContent incident={incident} onViewDetails={() => handleMarkerClick(incident.id)} />
               </Popup>
             </Marker>

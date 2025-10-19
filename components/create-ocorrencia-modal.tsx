@@ -1,20 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { X, MapPin, Calendar, Clock, AlertCircle, DollarSign, Users, ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { useState } from "react"
+import { X, AlertCircle, Check } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { useMobileToast } from "@/lib/hooks/use-mobile-toast"
 import { buildCreatePayload } from "@/lib/services/ocorrencias-api"
 import type { CreateOcorrenciaPayload } from "@/lib/types/ocorrencia-api"
 import type { Incident } from "@/lib/types/map"
-import { cn } from "@/lib/utils"
 
 interface CreateOcorrenciaModalProps {
   open: boolean
@@ -43,39 +40,31 @@ export function CreateOcorrenciaModal({
   onSubmit,
   initialCoordinates,
 }: CreateOcorrenciaModalProps) {
-  const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const mobileToast = useMobileToast()
 
-  // Dados do formulário
-  const [numeroBO, setNumeroBO] = useState("")
+  // Dados do formulário - campos essenciais
   const [idTipoCrime, setIdTipoCrime] = useState<number>(23)
-  const [idBairro, setIdBairro] = useState<number>(1)
-  const [dataOcorrencia, setDataOcorrencia] = useState(
-    new Date().toISOString().split('T')[0]
-  )
-  const [horaOcorrencia, setHoraOcorrencia] = useState(
-    new Date().toTimeString().slice(0, 5)
-  )
-  const [latitude, setLatitude] = useState(
-    initialCoordinates?.[0] || -8.76077
-  )
-  const [longitude, setLongitude] = useState(
-    initialCoordinates?.[1] || -63.8999
-  )
-  const [logradouro, setLogradouro] = useState("")
-  const [numeroEndereco, setNumeroEndereco] = useState("")
-  const [pontoReferencia, setPontoReferencia] = useState("")
+  const [prioridade, setPrioridade] = useState<"high" | "medium" | "low">("medium")
   const [descricao, setDescricao] = useState("")
-  const [vitimas, setVitimas] = useState(0)
-  const [valorPrejuizo, setValorPrejuizo] = useState(0)
-  const [recuperado, setRecuperado] = useState(false)
 
-  // Auto-gerar número de BO ao abrir modal
-  useEffect(() => {
-    if (open && !numeroBO) {
-      setNumeroBO(generateNumeroBO())
-    }
-  }, [open, numeroBO])
+  // Campos preenchidos automaticamente
+  const [numeroBO] = useState(generateNumeroBO())
+  const [idBairro] = useState<number>(1)
+  const [dataOcorrencia] = useState(new Date().toISOString().split('T')[0])
+  const [horaOcorrencia] = useState(new Date().toTimeString().slice(0, 5))
+
+  // Coordenadas: usar diretamente de initialCoordinates (não useState)
+  // para garantir que sempre usamos as coordenadas mais recentes do clique
+  const latitude = initialCoordinates?.[0] || -8.76077
+  const longitude = initialCoordinates?.[1] || -63.8999
+
+  const [logradouro] = useState("Não informado")
+  const [numeroEndereco] = useState("")
+  const [pontoReferencia] = useState("")
+  const [vitimas] = useState(0)
+  const [valorPrejuizo] = useState(0)
+  const [recuperado] = useState(false)
 
   const calcularDiaSemanaEPeriodo = () => {
     const data = new Date(`${dataOcorrencia}T${horaOcorrencia}`)
@@ -93,42 +82,29 @@ export function CreateOcorrenciaModal({
     return { diaSemana, periodoDia }
   }
 
-  const validarEtapa = (etapa: number): boolean => {
-    switch (etapa) {
-      case 1:
-        if (!descricao.trim()) {
-          toast.error("Descrição da ocorrência é obrigatória")
-          return false
-        }
-        return true
-      case 2:
-        if (!logradouro.trim()) {
-          toast.error("Logradouro é obrigatório")
-          return false
-        }
-        return true
-      default:
-        return true
-    }
-  }
-
-  const proximaEtapa = () => {
-    if (validarEtapa(step)) {
-      setStep(prev => Math.min(prev + 1, 4))
-    }
-  }
-
-  const etapaAnterior = () => {
-    setStep(prev => Math.max(prev - 1, 1))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validarEtapa(4)) return
+
+    // Validação simples
+    if (!descricao.trim()) {
+      mobileToast.error("Descrição da ocorrência é obrigatória")
+      return
+    }
 
     try {
       setIsSubmitting(true)
       const { diaSemana, periodoDia } = calcularDiaSemanaEPeriodo()
+
+      // Mapear prioridade para texto em português
+      const prioridadeTexto = {
+        high: "Alta",
+        medium: "Média",
+        low: "Baixa"
+      }[prioridade]
+
+      // Adicionar prioridade como metadata na descrição
+      // A API não possui campo de prioridade, então incluímos na descrição
+      const descricaoComPrioridade = `[PRIORIDADE: ${prioridadeTexto}]\n\n${descricao}`
 
       const payload = buildCreatePayload({
         numero_bo: numeroBO,
@@ -143,7 +119,7 @@ export function CreateOcorrenciaModal({
         logradouro,
         numero_endereco: numeroEndereco,
         ponto_referencia: pontoReferencia,
-        descricao_ocorrencia: descricao,
+        descricao_ocorrencia: descricaoComPrioridade,
         vitimas,
         valor_prejuizo: valorPrejuizo,
         recuperado,
@@ -154,41 +130,27 @@ export function CreateOcorrenciaModal({
       })
 
       const incident = await onSubmit(payload)
-      toast.success("Ocorrência criada com sucesso!")
+      mobileToast.success("Ocorrência criada com sucesso!")
       onSuccess(incident)
       onClose()
       resetForm()
     } catch (error) {
       console.error("Erro ao criar ocorrência:", error)
-      toast.error(error instanceof Error ? error.message : "Erro ao criar ocorrência")
+      mobileToast.error(error instanceof Error ? error.message : "Erro ao criar ocorrência")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const resetForm = () => {
-    setStep(1)
-    setNumeroBO("")
     setIdTipoCrime(23)
-    setIdBairro(1)
-    setDataOcorrencia(new Date().toISOString().split('T')[0])
-    setHoraOcorrencia(new Date().toTimeString().slice(0, 5))
-    setLatitude(initialCoordinates?.[0] || -8.76077)
-    setLongitude(initialCoordinates?.[1] || -63.8999)
-    setLogradouro("")
-    setNumeroEndereco("")
-    setPontoReferencia("")
+    setPrioridade("medium")
     setDescricao("")
-    setVitimas(0)
-    setValorPrejuizo(0)
-    setRecuperado(false)
   }
-
-  const totalSteps = 4
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-xl mt-12">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -201,266 +163,151 @@ export function CreateOcorrenciaModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Progress Stepper */}
-        <div className="flex items-center justify-between mb-4 px-4">
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex items-center flex-1">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all",
-                s < step ? "bg-green-500 border-green-500 text-white" :
-                s === step ? "bg-primary border-primary text-white" :
-                "bg-muted border-muted-foreground/30 text-muted-foreground"
-              )}>
-                {s < step ? <Check className="h-4 w-4" /> : s}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Formulário Simplificado */}
+          <div className="space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Registrar Nova Ocorrência
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Preencha os campos abaixo. Os demais dados serão preenchidos automaticamente.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipoCrime">Tipo de Crime</Label>
+              <Select value={String(idTipoCrime)} onValueChange={(v) => setIdTipoCrime(parseInt(v))}>
+                <SelectTrigger id="tipoCrime">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="23">Furto de Celular</SelectItem>
+                  <SelectItem value="18">Furto Simples</SelectItem>
+                  <SelectItem value="19">Furto Qualificado</SelectItem>
+                  <SelectItem value="11">Roubo a Pedestre</SelectItem>
+                  <SelectItem value="12">Roubo a Estabelecimento Comercial</SelectItem>
+                  <SelectItem value="13">Roubo de Veículo</SelectItem>
+                  <SelectItem value="1">Homicídio</SelectItem>
+                  <SelectItem value="4">Lesão Corporal Dolosa</SelectItem>
+                  <SelectItem value="27">Tráfico de Drogas</SelectItem>
+                  <SelectItem value="55">Acidente de Trânsito com Vítima</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="prioridade">Prioridade</Label>
+              <Select value={prioridade} onValueChange={(v) => setPrioridade(v as "high" | "medium" | "low")}>
+                <SelectTrigger id="prioridade">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span>Alta Prioridade</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <span>Média Prioridade</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="low">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span>Baixa Prioridade</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao">
+                Descrição Detalhada <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="descricao"
+                placeholder="Ex: Furto de motocicleta na Avenida..., Acidente entre dois veículos..."
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={8}
+                className="resize-none"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Forneça detalhes sobre o ocorrido, circunstâncias e envolvidos
+              </p>
+            </div>
+
+            {/* Informações automáticas */}
+            <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground">Resumo da Ocorrência:</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Número BO:</span>
+                  <span className="ml-2 font-mono font-medium">{numeroBO}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Data/Hora:</span>
+                  <span className="ml-2 font-medium">{dataOcorrencia} {horaOcorrencia}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Coordenadas:</span>
+                  <span className="ml-2 font-mono font-medium">{latitude.toFixed(5)}, {longitude.toFixed(5)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className="ml-2 font-medium">Registrada</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Prioridade:</span>
+                  <span className="ml-2 font-medium inline-flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${
+                      prioridade === "high" ? "bg-red-500" :
+                      prioridade === "medium" ? "bg-yellow-500" :
+                      "bg-green-500"
+                    }`}></div>
+                    {prioridade === "high" ? "Alta" : prioridade === "medium" ? "Média" : "Baixa"}
+                  </span>
+                </div>
               </div>
-              {s < totalSteps && (
-                <div className={cn(
-                  "flex-1 h-1 mx-2 rounded transition-all",
-                  s < step ? "bg-green-500" : "bg-muted"
-                )} />
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm()
+                onClose()
+              }}
+              disabled={isSubmitting}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Criando...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Criar Ocorrência
+                </>
               )}
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-1">
-          {/* Etapa 1: O que aconteceu? */}
-          {step === 1 && (
-            <div className="space-y-4 px-4 animate-in fade-in duration-300">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  O que aconteceu?
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Descreva a ocorrência de forma clara e objetiva
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tipoCrime">Tipo de Crime</Label>
-                <Select value={String(idTipoCrime)} onValueChange={(v) => setIdTipoCrime(parseInt(v))}>
-                  <SelectTrigger id="tipoCrime">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="23">Furto</SelectItem>
-                    <SelectItem value="24">Roubo</SelectItem>
-                    <SelectItem value="25">Homicídio</SelectItem>
-                    <SelectItem value="26">Lesão Corporal</SelectItem>
-                    <SelectItem value="27">Tráfico de Drogas</SelectItem>
-                    <SelectItem value="28">Acidente de Trânsito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descricao">
-                  Descrição Detalhada <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="descricao"
-                  placeholder="Ex: Furto de motocicleta na Avenida..., Acidente entre dois veículos..."
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  rows={6}
-                  className="resize-none"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Forneça detalhes sobre o ocorrido, circunstâncias e envolvidos
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa 2: Onde aconteceu? */}
-          {step === 2 && (
-            <div className="space-y-4 px-4 animate-in fade-in duration-300">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Onde aconteceu?
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Informe o local da ocorrência
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="logradouro">
-                    Logradouro <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="logradouro" placeholder="Av. Presidente Dutra" value={logradouro} onChange={(e) => setLogradouro(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="numeroEndereco">Número</Label>
-                  <Input id="numeroEndereco" placeholder="123" value={numeroEndereco} onChange={(e) => setNumeroEndereco(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
-                <Input id="pontoReferencia" placeholder="Próximo ao mercado, em frente à escola..." value={pontoReferencia} onChange={(e) => setPontoReferencia(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
-                <Select value={String(idBairro)} onValueChange={(v) => setIdBairro(parseInt(v))}>
-                  <SelectTrigger id="bairro"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Centro</SelectItem>
-                    <SelectItem value="2">Zona Leste</SelectItem>
-                    <SelectItem value="3">Zona Sul</SelectItem>
-                    <SelectItem value="4">Zona Norte</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="latitude">Latitude</Label>
-                  <Input id="latitude" type="number" step="0.000001" value={latitude} onChange={(e) => setLatitude(parseFloat(e.target.value))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="longitude">Longitude</Label>
-                  <Input id="longitude" type="number" step="0.000001" value={longitude} onChange={(e) => setLongitude(parseFloat(e.target.value))} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa 3: Quando aconteceu? */}
-          {step === 3 && (
-            <div className="space-y-4 px-4 animate-in fade-in duration-300">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Quando aconteceu?
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Informe data e hora da ocorrência
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dataOcorrencia">Data da Ocorrência</Label>
-                  <Input id="dataOcorrencia" type="date" value={dataOcorrencia} onChange={(e) => setDataOcorrencia(e.target.value)} max={new Date().toISOString().split('T')[0]} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="horaOcorrencia">Hora da Ocorrência</Label>
-                  <Input id="horaOcorrencia" type="time" value={horaOcorrencia} onChange={(e) => setHoraOcorrencia(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="bg-muted/50 border border-border rounded-lg p-4">
-                <h4 className="text-xs font-semibold mb-2">Calculado Automaticamente:</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Dia da Semana: </span>
-                    <span className="font-medium">{calcularDiaSemanaEPeriodo().diaSemana}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Período: </span>
-                    <span className="font-medium">{calcularDiaSemanaEPeriodo().periodoDia}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa 4: Detalhes + Resumo */}
-          {step === 4 && (
-            <div className="space-y-4 px-4 animate-in fade-in duration-300">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Detalhes Adicionais
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Informações complementares (opcional)
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vitimas" className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Número de Vítimas
-                  </Label>
-                  <Input id="vitimas" type="number" min="0" value={vitimas} onChange={(e) => setVitimas(parseInt(e.target.value) || 0)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="valorPrejuizo" className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Valor do Prejuízo (R$)
-                  </Label>
-                  <Input id="valorPrejuizo" type="number" min="0" step="0.01" value={valorPrejuizo} onChange={(e) => setValorPrejuizo(parseFloat(e.target.value) || 0)} />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 p-4 border border-border rounded-lg">
-                <Checkbox id="recuperado" checked={recuperado} onCheckedChange={(checked) => setRecuperado(checked as boolean)} />
-                <Label htmlFor="recuperado" className="text-sm font-normal cursor-pointer flex-1">
-                  Bem ou objeto recuperado
-                </Label>
-              </div>
-
-              <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
-                <h4 className="text-sm font-semibold">Resumo da Ocorrência:</h4>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Número BO:</span>
-                    <span className="font-mono font-semibold">{numeroBO}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tipo:</span>
-                    <span className="font-medium">Crime Tipo {idTipoCrime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Local:</span>
-                    <span className="font-medium">{logradouro || "Não informado"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Data/Hora:</span>
-                    <span className="font-medium">{dataOcorrencia} às {horaOcorrencia}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            </Button>
+          </div>
         </form>
-
-        {/* Botões de Navegação */}
-        <div className="flex gap-3 justify-between pt-4 border-t px-4">
-          <Button type="button" variant="outline" onClick={step === 1 ? () => { resetForm(); onClose() } : etapaAnterior} disabled={isSubmitting}>
-            {step === 1 ? (
-              <>
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
-              </>
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </>
-            )}
-          </Button>
-
-          {step < totalSteps ? (
-            <Button type="button" onClick={proximaEtapa}>
-              Próximo
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button type="submit" disabled={isSubmitting} onClick={handleSubmit}>
-              {isSubmitting ? "Criando..." : "Criar Ocorrência"}
-              <Check className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-        </div>
       </DialogContent>
     </Dialog>
   )

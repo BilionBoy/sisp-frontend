@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import dynamic from "next/dynamic"
-import { Plus, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
+import { RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { OcorrenciasListCompact } from "@/components/ocorrencias-list-compact"
@@ -76,8 +76,9 @@ export default function OcorrenciasPage() {
 
   // Handler para criar nova ocorrência
   const handleCreateSuccess = (incident: Incident) => {
-    // Atualiza a lista
-    refresh()
+    // Hook já adiciona localmente, não precisa fazer refresh
+    // que poderia remover o item se houver paginação
+    console.log('Ocorrência criada:', incident.id)
   }
 
   // Handler para clique direito no mapa (criar ocorrência com coordenadas)
@@ -88,8 +89,9 @@ export default function OcorrenciasPage() {
 
   // Handler para resolver ocorrência
   const handleResolveOcorrencia = async (id: number) => {
+    // ENUM PostgreSQL: 'Registrada', 'Em Investigação', 'Resolvida', 'Arquivada'
     await updateOcorrencia(id, {
-      status_ocorrencia: "Concluída"
+      status_ocorrencia: "Resolvida"
     })
   }
 
@@ -136,22 +138,9 @@ export default function OcorrenciasPage() {
               />
             )}
           </div>
-          <div className="absolute top-4 left-4 z-[1000]">
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="shadow-lg"
-              size="lg"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Nova Ocorrência
-            </Button>
-          </div>
-          
 
           {/* Container lateral direito com flex para organizar widgets */}
           <div className="absolute top-4 bottom-4 right-2 sm:right-4 z-[1000] w-[calc(100vw-1rem)] sm:w-96 md:w-[28rem] flex flex-col gap-3 pointer-events-none">
-            {/* Botão de Nova Ocorrência - Canto superior esquerdo */}
-          
             {/* Widget de Prioridades */}
             <div className="pointer-events-auto">
               <PriorityWidget
@@ -162,8 +151,14 @@ export default function OcorrenciasPage() {
             </div>
 
             {/* Lista de Ocorrências */}
-            <div className="flex-1 min-h-0 pointer-events-auto">
-              <Card className="border-2 shadow-xl backdrop-blur-md bg-card/98 h-full flex flex-col">
+            <div className={cn(
+              "pointer-events-auto transition-all duration-200",
+              isListCollapsed ? "flex-none" : "flex-1 min-h-0"
+            )}>
+              <Card className={cn(
+                "border-2 shadow-xl backdrop-blur-md bg-card/98 flex flex-col transition-all duration-200",
+                isListCollapsed ? "h-auto" : "h-full"
+              )}>
                 <CardHeader className="pb-3 shrink-0">
                   <CardTitle className="text-base font-semibold flex items-center justify-between">
                     <span>Ocorrências Recentes</span>

@@ -30,13 +30,13 @@ function mapPriority(ocorrencia: OcorrenciaAPI): "high" | "medium" | "low" {
 
 /**
  * Mapeia status da API para status do frontend
+ * ENUM PostgreSQL: 'Registrada', 'Em Investigação', 'Resolvida', 'Arquivada'
  */
 function mapStatus(status: string): string {
   const statusMap: Record<string, string> = {
     "Registrada": "Pendente",
-    "Em Atendimento": "Em Atendimento",
-    "Em Análise": "Em Análise",
-    "Concluída": "Resolvido",
+    "Em Investigação": "Em Investigação",
+    "Resolvida": "Resolvido",
     "Arquivada": "Arquivado",
   }
 

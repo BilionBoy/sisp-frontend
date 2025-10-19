@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { useMobileToast } from "@/lib/hooks/use-mobile-toast"
 import type { Incident } from "@/lib/types/map"
 
 interface IncidentDetailsProps {
@@ -19,6 +19,7 @@ interface IncidentDetailsProps {
 
 export function IncidentDetails({ incidentId, onClose, incidents = [], onResolve }: IncidentDetailsProps) {
   const [isResolving, setIsResolving] = useState(false)
+  const mobileToast = useMobileToast()
 
   // Buscar incident real dos dados
   const incident = useMemo(() => {
@@ -33,30 +34,33 @@ export function IncidentDetails({ incidentId, onClose, incidents = [], onResolve
   // Função para resolver ocorrência
   const handleResolve = async () => {
     if (!incident._apiData?.id_ocorrencia) {
-      toast.error("Erro: ID da ocorrência não encontrado")
+      mobileToast.error("Erro: ID da ocorrência não encontrado")
       return
     }
 
     if (!onResolve) {
-      toast.error("Erro: Função de resolução não disponível")
+      mobileToast.error("Erro: Função de resolução não disponível")
       return
     }
 
     try {
       setIsResolving(true)
       await onResolve(incident._apiData.id_ocorrencia)
-      toast.success("Ocorrência resolvida com sucesso!")
+      mobileToast.success("Ocorrência resolvida com sucesso!")
       onClose()
     } catch (error) {
       console.error("Erro ao resolver ocorrência:", error)
-      toast.error("Erro ao resolver ocorrência. Tente novamente.")
+      mobileToast.error("Erro ao resolver ocorrência. Tente novamente.")
     } finally {
       setIsResolving(false)
     }
   }
 
   // Determinar se pode ser resolvida (não está resolvida ou arquivada)
-  const canResolve = incident.status !== "Resolvido" && incident.status !== "Arquivado"
+  // Enum PostgreSQL: 'Registrada', 'Em Investigação', 'Resolvida', 'Arquivada'
+  const canResolve =
+    incident.status !== "Resolvida" &&
+    incident.status !== "Arquivada"
 
   // Formatar data/hora
   const formattedDate = incident.timestamp
