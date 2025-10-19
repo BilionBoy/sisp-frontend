@@ -9,28 +9,38 @@ import type {
   FiltrosTipoCrime,
 } from "@/lib/types/tipos-crime-api"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://10.0.1.66:3000/api/v1"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://10.0.1.66:3000/api/v1"
 
-/**
- * Helper para fazer fetch com tratamento de erros
- */
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  })
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`HTTP ${response.status}: ${errorText}`)
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`HTTP ${response.status}: ${errorText}`)
+    }
+
+    return response.json()
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout after 10 seconds')
+    }
+    throw error
   }
-
-  return response.json()
 }
 
 /**

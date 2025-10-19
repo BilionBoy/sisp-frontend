@@ -7,11 +7,16 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { AdvancedMapControls } from "./AdvancedMapControls"
 import { MapLegend } from "./MapLegend"
+import { MarkerClusterLayer } from "./MarkerClusterLayer"
+import { CanvasMarkerLayer } from "./CanvasMarkerLayer"
+import { ViewportAwareMarkers } from "./ViewportAwareMarkers"
+import { CameraMarker } from "@/components/cameras/camera-marker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Clock, MapPin as MapPinIcon, AlertTriangle, Navigation } from "lucide-react"
 import type { Incident, MapView, TileLayer as TileLayerType } from "@/lib/types/map"
+import type { Camera } from "@/lib/types/camera"
 import { cn } from "@/lib/utils"
 import { useFullscreen } from "@/lib/contexts/fullscreen-context"
 
@@ -27,7 +32,9 @@ if (typeof window !== "undefined") {
 
 interface EnhancedInteractiveMapProps {
   incidents: Incident[]
+  cameras?: Camera[]
   onIncidentClick?: (id: string) => void
+  onCameraClick?: (cameraId: number) => void
   onMapRightClick?: (lat: number, lng: number) => void
   center?: [number, number]
   zoom?: number
@@ -35,7 +42,10 @@ interface EnhancedInteractiveMapProps {
   showSearch?: boolean
   showAdvancedControls?: boolean
   showLegend?: boolean
+  showCameras?: boolean
   height?: string
+  useViewportRendering?: boolean
+  useCanvasRendering?: boolean
 }
 
 /**
@@ -478,7 +488,9 @@ function MapContextMenuHandler({
  */
 export function EnhancedInteractiveMap({
   incidents,
+  cameras = [],
   onIncidentClick,
+  onCameraClick,
   onMapRightClick,
   center = [-8.76077, -63.8999],
   zoom = 12,
@@ -486,14 +498,18 @@ export function EnhancedInteractiveMap({
   showSearch = true,
   showAdvancedControls = true,
   showLegend = true,
+  showCameras = true,
   height = "600px",
+  useViewportRendering = true,
+  useCanvasRendering = false,
 }: EnhancedInteractiveMapProps) {
-  // Garantir que incidents seja sempre um array
   const safeIncidents = Array.isArray(incidents) ? incidents : []
+  const safeCameras = Array.isArray(cameras) ? cameras : []
 
   const [viewMode, setViewMode] = useState<MapView>("markers")
   const [tileLayer, setTileLayer] = useState<TileLayerType>("osm")
   const [selectedIncident, setSelectedIncident] = useState<string | null>(null)
+  const [selectedCameraId, setSelectedCameraId] = useState<number | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [targetPosition, setTargetPosition] = useState<[number, number, number] | null>(null)
   const [shouldFitBounds, setShouldFitBounds] = useState(true)
@@ -558,6 +574,14 @@ export function EnhancedInteractiveMap({
     [onIncidentClick]
   )
 
+  const handleCameraClick = useCallback(
+    (cameraId: number) => {
+      setSelectedCameraId(cameraId)
+      onCameraClick?.(cameraId)
+    },
+    [onCameraClick]
+  )
+
   const handleToggleFullscreen = useCallback(() => {
     setFullscreen(!isFullscreen)
   }, [isFullscreen, setFullscreen])
@@ -613,29 +637,61 @@ export function EnhancedInteractiveMap({
 
         {/* Cluster Layer */}
         {viewMode === "clusters" && (
-          <ClusterLayer
+          <MarkerClusterLayer
             incidents={safeIncidents}
             onIncidentClick={handleMarkerClick}
+            createCustomIcon={createCustomIcon}
             selectedIncident={selectedIncident}
           />
         )}
 
         {/* Marker Layer */}
-        {viewMode === "markers" &&
-          safeIncidents.map((incident) => (
-            <Marker
-              key={incident.id}
-              position={[incident.lat, incident.lng]}
-              icon={createCustomIcon(incident.priority, selectedIncident === incident.id)}
-              eventHandlers={{
-                click: () => handleMarkerClick(incident.id),
-              }}
-            >
-              <Popup className="p-3">
-                <IncidentPopupContent incident={incident} onViewDetails={() => handleMarkerClick(incident.id)} />
-              </Popup>
-            </Marker>
-          ))}
+        {viewMode === "markers" && (
+          <>
+            {useCanvasRendering ? (
+              <CanvasMarkerLayer
+                incidents={safeIncidents}
+                onIncidentClick={handleMarkerClick}
+                selectedIncident={selectedIncident}
+              />
+            ) : useViewportRendering ? (
+              <ViewportAwareMarkers
+                incidents={safeIncidents}
+                onIncidentClick={handleMarkerClick}
+                createCustomIcon={createCustomIcon}
+                selectedIncident={selectedIncident}
+                renderPopupContent={(incident) => (
+                  <IncidentPopupContent incident={incident} onViewDetails={() => handleMarkerClick(incident.id)} />
+                )}
+              />
+            ) : (
+              safeIncidents.map((incident) => (
+                <Marker
+                  key={incident.id}
+                  position={[incident.lat, incident.lng]}
+                  icon={createCustomIcon(incident.priority, selectedIncident === incident.id)}
+                  eventHandlers={{
+                    click: () => handleMarkerClick(incident.id),
+                  }}
+                >
+                  <Popup className="p-3">
+                    <IncidentPopupContent incident={incident} onViewDetails={() => handleMarkerClick(incident.id)} />
+                  </Popup>
+                </Marker>
+              ))
+            )}
+          </>
+        )}
+
+        {/* Camera Markers - Always visible when showCameras is true */}
+        {showCameras && safeCameras.map((camera) => (
+          <CameraMarker
+            key={`camera-${camera.id}`}
+            camera={camera}
+            onCameraClick={handleCameraClick}
+            isSelected={selectedCameraId === camera.id}
+          />
+        ))}
 
         {/* Auto-ajustar bounds */}
         <MapBoundsHandler incidents={safeIncidents} shouldFit={shouldFitBounds} />

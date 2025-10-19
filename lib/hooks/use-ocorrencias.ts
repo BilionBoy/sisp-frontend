@@ -92,7 +92,7 @@ export function useOcorrencias(filters?: OcorrenciaFilters): UseOcorrenciasRetur
     payload: Partial<OcorrenciaAPI>
   ): Promise<Incident> => {
     try {
-      const ocorrenciaAtualizada = await ocorrenciasAPI.update(id, { ocorrencia: payload })
+      const ocorrenciaAtualizada = await ocorrenciasAPI.update(id, { ocorrencia: payload as any })
       const incident = await ocorrenciaAPIToIncident(ocorrenciaAtualizada)
 
       // Atualiza no estado local

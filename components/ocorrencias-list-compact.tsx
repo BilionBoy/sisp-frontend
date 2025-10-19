@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Clock, MapPin } from "lucide-react"
@@ -11,6 +12,9 @@ interface OcorrenciasListCompactProps {
   selectedId?: string | null
   onSelect?: (id: string) => void
   priorityFilter?: "all" | "high" | "medium" | "low"
+  hasMore?: boolean
+  isFetchingMore?: boolean
+  onLoadMore?: () => void
 }
 
 /**
@@ -20,17 +24,39 @@ export function OcorrenciasListCompact({
   incidents,
   selectedId,
   onSelect,
-  priorityFilter = "all"
+  priorityFilter = "all",
+  hasMore = false,
+  isFetchingMore = false,
+  onLoadMore
 }: OcorrenciasListCompactProps) {
-  // Filtrar por prioridade
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
   const filteredIncidents = priorityFilter === "all"
     ? incidents
     : incidents.filter(inc => inc.priority === priorityFilter)
 
-  // Ordenar por timestamp (mais recentes primeiro)
   const sortedIncidents = [...filteredIncidents].sort((a, b) => {
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
   })
+
+  useEffect(() => {
+    if (!hasMore || isFetchingMore || !onLoadMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { threshold: 0.5 }
+    )
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, isFetchingMore, onLoadMore])
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -101,7 +127,6 @@ export function OcorrenciasListCompact({
               )}
             >
               <div className="p-3 space-y-2.5">
-                {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", getPriorityColor(incident.priority))} />
@@ -117,12 +142,10 @@ export function OcorrenciasListCompact({
                   </Badge>
                 </div>
 
-                {/* Description */}
                 <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {incident.description}
                 </p>
 
-                {/* Footer */}
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground gap-2">
                   <div className="flex items-center gap-1 flex-1 min-w-0">
                     <MapPin className="h-3 w-3 shrink-0" />
@@ -130,13 +153,26 @@ export function OcorrenciasListCompact({
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Clock className="h-3 w-3" />
-                    <span className="whitespace-nowrap">{formatRelativeTime(incident.timestamp)}</span>
+                    <span className="whitespace-nowrap">{formatRelativeTime(incident.timestamp || '')}</span>
                   </div>
                 </div>
               </div>
             </button>
           )
         })}
+
+        {hasMore && (
+          <div ref={loadMoreRef} className="py-4 text-center">
+            {isFetchingMore ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-xs text-muted-foreground">Carregando...</span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground">Carregue mais</span>
+            )}
+          </div>
+        )}
       </div>
     </ScrollArea>
   )

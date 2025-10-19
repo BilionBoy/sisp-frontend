@@ -26,6 +26,8 @@ export function useOcorrenciasQuery(filters?: OcorrenciaFilters) {
     queryKey: tiposCrimeKeys.ativos(),
     queryFn: () => tiposCrimeAPI.listAtivos(),
     staleTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   })
 
   const query = useQuery({
@@ -39,17 +41,30 @@ export function useOcorrenciasQuery(filters?: OcorrenciaFilters) {
         queryClient.setQueryData(ocorrenciasKeys.list(filters), mappedFromCache)
       }
 
-      const ocorrencias = await ocorrenciasAPI.list(filters)
+      try {
+        const ocorrencias = await ocorrenciasAPI.list(filters)
 
-      await Promise.all(
-        ocorrencias.map(oc =>
-          cacheDB.set('ocorrencias', String(oc.id_ocorrencia), oc, 10 * 60 * 1000).catch(() => {})
+        await Promise.all(
+          ocorrencias.map(oc =>
+            cacheDB.set('ocorrencias', String(oc.id_ocorrencia), oc, 10 * 60 * 1000).catch(() => {})
+          )
         )
-      )
 
-      return ocorrenciasAPIToIncidents(ocorrencias)
+        return ocorrenciasAPIToIncidents(ocorrencias)
+      } catch (error) {
+        console.error('Erro ao buscar ocorrências da API:', error)
+
+        if (cached && cached.length > 0) {
+          console.log(`Usando cache offline devido a erro da API`)
+          return ocorrenciasAPIToIncidents(cached)
+        }
+
+        throw error
+      }
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   })
 
   const createMutation = useMutation({
@@ -67,7 +82,7 @@ export function useOcorrenciasQuery(filters?: OcorrenciaFilters) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: number; payload: Partial<OcorrenciaAPI> }) => {
-      const ocorrencia = await ocorrenciasAPI.update(id, { ocorrencia: payload })
+      const ocorrencia = await ocorrenciasAPI.update(id, { ocorrencia: payload as any })
       return ocorrenciaAPIToIncident(ocorrencia)
     },
     onSuccess: (updatedIncident, { id }) => {

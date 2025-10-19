@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, AlertCircle, Check } from "lucide-react"
+import { X, AlertCircle, Check, Camera as CameraIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -12,6 +12,7 @@ import { useMobileToast } from "@/lib/hooks/use-mobile-toast"
 import { buildCreatePayload } from "@/lib/services/ocorrencias-api"
 import type { CreateOcorrenciaPayload } from "@/lib/types/ocorrencia-api"
 import type { Incident } from "@/lib/types/map"
+import type { Camera } from "@/lib/types/camera"
 
 interface CreateOcorrenciaModalProps {
   open: boolean
@@ -19,6 +20,7 @@ interface CreateOcorrenciaModalProps {
   onSuccess: (incident: Incident) => void
   onSubmit: (payload: CreateOcorrenciaPayload) => Promise<Incident>
   initialCoordinates?: [number, number] // [lat, lng]
+  sourceCamera?: Camera // Câmera de origem (se aplicável)
 }
 
 /**
@@ -39,6 +41,7 @@ export function CreateOcorrenciaModal({
   onSuccess,
   onSubmit,
   initialCoordinates,
+  sourceCamera,
 }: CreateOcorrenciaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const mobileToast = useMobileToast()
@@ -162,6 +165,23 @@ export function CreateOcorrenciaModal({
                 Preencha os campos abaixo. Os demais dados serão preenchidos automaticamente.
               </p>
             </div>
+
+            {/* Indicador de origem da câmera */}
+            {sourceCamera && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <CameraIcon className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-green-700">
+                      Ocorrência identificada via câmera de segurança
+                    </p>
+                    <p className="text-xs text-green-600/80 mt-1">
+                      {sourceCamera.nome} - {sourceCamera.localizacao}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="tipoCrime">Tipo de Crime</Label>

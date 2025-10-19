@@ -4,6 +4,7 @@ import { Inter, Roboto_Mono } from "next/font/google"
 import "./globals.css"
 import "leaflet/dist/leaflet.css"
 import "../styles/map.css"
+import "../styles/mobile.css"
 import { SidebarProvider } from "@/lib/contexts/sidebar-context"
 import { FullscreenProvider } from "@/lib/contexts/fullscreen-context"
 import { Providers } from "./providers"
@@ -20,11 +21,7 @@ const robotoMono = Roboto_Mono({
   display: "swap",
 })
 
-export const metadata: Metadata = {
-  title: "SISP Porto Velho - Sistema Integrado de Segurança Pública",
-  description: "Plataforma inteligente de gestão e monitoramento da segurança pública municipal",
-    generator: 'v0.app'
-}
+export const metadata: Metadata = {  title: "SISP Porto Velho - Sistema Integrado de Segurança Pública",  description: "Plataforma inteligente de gestão e monitoramento da segurança pública municipal",  generator: "v0.app",  viewport: {    width: "device-width",    initialScale: 1,    maximumScale: 5,    userScalable: true,    viewportFit: "cover",  },  themeColor: [    { media: "(prefers-color-scheme: light)", color: "#ffffff" },    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },  ],  appleWebApp: {    capable: true,    statusBarStyle: "default",    title: "SISP",  },  formatDetection: {    telephone: false,  },}
 
 export default function RootLayout({
   children,

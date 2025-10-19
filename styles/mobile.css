@@ -1,0 +1,216 @@
+/**
+ * Estilos específicos para versão mobile do SISP
+ * Otimizações para touch, performance e UX mobile
+ */
+
+/* Scrollbar customizada para mobile (hide quando não em uso) */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Smooth scrolling para navegação mobile */
+@media (max-width: 768px) {
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevenir zoom em inputs (iOS) */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Touch feedback melhorado */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    touch-action: manipulation;
+  }
+
+  /* Otimizar renderização de cards */
+  .card-mobile {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* Pull-to-refresh indicator customizado */
+  @supports (overscroll-behavior: contain) {
+    body {
+      overscroll-behavior: contain;
+    }
+  }
+}
+
+/* Touch targets mínimos (44x44px) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Safe areas para notch/home indicator (iOS) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Otimizações de performance para animações mobile */
+@media (max-width: 768px) {
+  .animate-smooth {
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Reduzir motion para usuários que preferem */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Leaflet map mobile optimizations */
+@media (max-width: 768px) {
+  .leaflet-container {
+    touch-action: pan-x pan-y;
+  }
+
+  /* Botões de zoom maiores para touch */
+  .leaflet-control-zoom a {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    font-size: 20px;
+  }
+
+  /* Markers otimizados */
+  .leaflet-marker-icon {
+    will-change: transform;
+  }
+}
+
+/* Bottom sheet overlay (blur background) */
+.bottom-sheet-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Skeleton loading otimizado */
+@media (max-width: 768px) {
+  .skeleton-pulse {
+    animation: skeleton-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+/* Floating action button (FAB) positioning */
+.fab-mobile {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .fab-mobile {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Header sticky otimizado */
+@media (max-width: 768px) {
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Card swipe indicators */
+.card-swipeable {
+  position: relative;
+  transition: transform 0.2s ease-out;
+}
+
+.card-swipeable::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card-swipeable.swiping::after {
+  opacity: 1;
+}
+
+/* Loading spinner mobile */
+.spinner-mobile {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast notifications mobile positioning */
+@media (max-width: 768px) {
+  [data-sonner-toaster] {
+    top: env(safe-area-inset-top) !important;
+  }
+
+  [data-sonner-toast] {
+    margin: 8px !important;
+  }
+}

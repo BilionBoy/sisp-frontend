@@ -10,7 +10,6 @@ import { PriorityWidget } from "@/components/priority-widget"
 import { IncidentDetails } from "@/components/incident-details"
 import { CreateOcorrenciaModal } from "@/components/create-ocorrencia-modal"
 import { CameraViewerModal } from "@/components/cameras/camera-viewer-modal"
-import { MobileRedirect } from "@/components/mobile/mobile-redirect"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useInfiniteOcorrencias } from "@/lib/hooks/use-infinite-ocorrencias"
@@ -140,9 +139,6 @@ export default function OcorrenciasPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Redirecionamento automático para mobile */}
-      <MobileRedirect mobileRoute="/ocorrencias-mobile" desktopRoutes={["/ocorrencias"]} />
-
       <Header />
       <Sidebar />
       <Toaster position="top-right" richColors />

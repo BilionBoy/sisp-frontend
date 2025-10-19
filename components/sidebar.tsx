@@ -22,16 +22,11 @@ const navigation = [
     icon: MapPin,
   },
   {
-    name: "Monitoramento",
-    href: "/monitoramento",
-    icon: Camera,
-  },
-  {
     name: "Analytics",
     href: "/",
     icon: LayoutDashboard,
   },
-  
+
 ]
 
 export function Sidebar() {
